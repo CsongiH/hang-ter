@@ -1,0 +1,50 @@
+<---------------------------------------------NEXT.JS változtatások--------------------------------------------------------------->
+
+<--------------------Régi syntax-------------------->                       <---------------------Új syntax-------------------->
+
+
+Pages Router (Traditional Approach)                                        App Router (New in Next.js 13+)
+
+pages/index.js → /                                                         app/page.js → /
+
+pages/about.js → /about                                                    app/about/page.js → /about
+
+pages/blog/first-post.js → /blog/first-post
+
+pages/blog/[slug].js → dynamic route /blog/:slug                           app/blog/[slug]/page.js → dynamic route /blog/:slug
+
+pages/404.js → custom 404 page                                             app/not-found.js → custom 404 page
+
+
+
+_app.js                                                                     layout.js
+index.js                                                                    page.js
+
+MyApp                                                                       RootLayout
+<Component {..pageProps}/>                                                  {children}
+
+
+
+<---------------------------------------------FIREBASE változtatások--------------------------------------------------------------->
+
+<--------------------Régi syntax-------------------->                       <---------------------Új syntax-------------------->
+
+
+firebase.auth().signInWithPopup(provider)                                    import { signInWithPopup } from 'firebase/auth'
+                                                                             signInWithPopup(auth, provider)
+
+
+firebase.firestore().collection('posts').get()                               import { getDocs, collection } from 'firebase/firestore'
+                                                                             getDocs(collection(firestore, 'posts'))
+
+
+firebase.storage().ref('images/file.jpg').put(file)                          import { ref, uploadBytes } from 'firebase/storage'
+                                                                             uploadBytes(ref(storage, 'images/file.jpg'), file)
+
+
+firebase.auth().onAuthStateChanged(callback)                                 import { onAuthStateChanged } from 'firebase/auth'
+                                                                             onAuthStateChanged(auth, callback)
+
+
+firebase.firestore().doc('posts/123').update(data)                           import { doc, updateDoc } from 'firebase/firestore'
+                                                                             updateDoc(doc(firestore, 'posts', '123'), data)
