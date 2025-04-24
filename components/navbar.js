@@ -35,7 +35,7 @@ export default function Navbar() {
                     </Link>
                 </li>
                 <li>
-                    <Link href="/post">
+                    <Link href="/posteditor">
                         <button>Poszt</button>
                     </Link>
                 </li>

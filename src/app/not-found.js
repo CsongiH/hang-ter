@@ -6,7 +6,7 @@ export default function NotFound() {
       <main>
           <h1>404</h1>
       <h2>az oldal nem található</h2>
-          <Image src="/404.jpg" alt="404"  style={{ width: '400px', height: 'auto' }}/>
+          <img src="/404.jpg" alt="404"  style={{ width: '400px', height: 'auto' }}/>
   </main>
   )
 }
