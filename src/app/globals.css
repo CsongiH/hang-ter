@@ -177,7 +177,7 @@ button.btn-logo {
 .card {
   padding: 2rem;
   margin: 1rem 0;
-  background-color: white;
+  background-color: #000000;
   border: 1px solid var(--color-panel);
   border-radius: 8px;
 }

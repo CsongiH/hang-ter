@@ -55,7 +55,7 @@ export default function Navbar() {
 
                             <li>
                                 <Link href={`/${username}`}>
-                                    <img src={user?.photoURL} />
+                                    <img src={user?.photoURL || "/user-icon-placeholder.png"} />
                                 </Link>
                             </li>
                         </>

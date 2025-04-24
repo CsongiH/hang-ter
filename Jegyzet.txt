@@ -13,7 +13,7 @@ pages/blog/first-post.js → /blog/first-post
 
 pages/blog/[slug].js → dynamic route /blog/:slug                           app/blog/[slug]/page.js → dynamic route /blog/:slug
 
-pages/404.js → custom 404 page                                             app/not-found.js → custom 404 page
+pages/not-found.js → custom 404 page                                             app/not-found.js → custom 404 page
 
 
 
