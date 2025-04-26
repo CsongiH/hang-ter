@@ -1,45 +1,55 @@
 'use client';
 
 import CheckAuthentication from '../../../components/checkAuthentication';
-import feed from '../../../components/feed';
-import { UserContext } from '../../../lib/AuthContext';
-import { firestore, auth, serverTimestamp } from '../../../lib/firebase';
-
-import { useContext, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import Spinner from '../../../components/spinner';
 import PostLoader from '../../../components/postLoader';
-
-import { collection, query, orderBy, doc, setDoc } from 'firebase/firestore';
-import { useCollection } from 'react-firebase-hooks/firestore';
+import { firestore, auth, serverTimestamp, jsonConvert } from '../../../lib/firebase';
+import {
+    collectionGroup,
+    collection,
+    query,
+    where,
+    orderBy,
+    limit,
+    getDocs,
+    doc,
+    setDoc
+} from 'firebase/firestore';
+import { useContext, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { UserContext } from '../../../lib/AuthContext';
 import kebabCase from 'lodash.kebabcase';
 import toast from 'react-hot-toast';
 
 export default function EditorPostsPage() {
+    const [posts, setPosts] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchGlobalPosts() {
+            // globális, publikált posztok
+            const postsQuery = query(
+                collectionGroup(firestore, 'posts'),
+                where('published', '==', true),
+                orderBy('createdAt', 'desc'),
+                limit(10)
+            );
+            const snap = await getDocs(postsQuery);
+            setPosts(snap.docs.map(jsonConvert));
+            setIsLoading(false);
+        }
+        fetchGlobalPosts();
+    }, []);
+
     return (
-        <main >
+        <main>
             <CheckAuthentication>
-                <MyPosts/>
                 <NewPost />
+                {isLoading
+                    ? <Spinner show={true} />
+                    : <PostLoader initialPosts={posts} />}
             </CheckAuthentication>
         </main>
-    );
-}
-
-function MyPosts() {
-    const { username } = useContext(UserContext);
-    const uid = auth.currentUser?.uid;
-    // postsRef: a saját posztjaim
-    const postsReference = collection(firestore, 'users', uid, 'posts');
-    const queryPosts = query(postsReference, orderBy('createdAt'));
-    const [snapshot] = useCollection(queryPosts);
-
-    const posts = snapshot?.docs.map(doc => doc.data()) || [];
-
-    return (
-        <>
-            <h1>Saját posztjaim</h1>
-            <PostLoader posts={posts} modifyPost={true} />
-        </>
     );
 }
 
@@ -48,17 +58,18 @@ function NewPost() {
     const { username } = useContext(UserContext);
     const [title, setTitle] = useState('');
 
-    const kebabSlug = encodeURI(kebabCase(title));
+    // URL-barát slug
+    const slug = encodeURI(kebabCase(title));
     const isValid = title.length > 3 && title.length < 100;
 
     const createPost = async e => {
         e.preventDefault();
         const uid = auth.currentUser.uid;
-        const ref = doc(firestore, 'users', uid, 'posts', kebabSlug);
+        const ref = doc(firestore, 'users', uid, 'posts', slug);
 
         const data = {
             title,
-            kebabSlug,
+            slug,
             uid,
             username,
             published: false,
@@ -68,21 +79,18 @@ function NewPost() {
         };
 
         await setDoc(ref, data);
-        // toast.success('Poszt létrehozva!');
-
+        toast.success('Poszt létrehozva!');  // sikerüzenet
         router.push(`/posteditor/${slug}`);
     };
 
     return (
-        <form onSubmit={createPost} >
+        <form onSubmit={createPost}>
             <input
                 value={title}
                 onChange={e => setTitle(e.target.value)}
                 placeholder="Hirdetés neve"
             />
-            <p>
-                <strong>Slug: </strong> {kebabSlug}
-            </p>
+            <p><strong>Slug:</strong> {slug}</p>
             <button type="submit" disabled={!isValid} className="btn-green">
                 Poszt publikálása
             </button>

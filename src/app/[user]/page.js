@@ -7,16 +7,15 @@ import { collection, query, where, orderBy, limit, getDocs } from "firebase/fire
 import { firestore } from "../../../lib/firebase";
 import { LogOutButton } from "../../../components/LogInButtons";
 
-export default async function UserPage({ params }) {
-    const { user: username } = params;
-    const userData = await getUserWithUsername(username);
+export default async function UserPage(props) {
+    const { user: username } = await props.params;
 
-    // ha nincs ilen oldal -> 404 page
+    const userData = await getUserWithUsername(username);
     if (!userData) {
-        notFound();
+        notFound();  // nincs ilyen user → 404
     }
 
-
+    // lekérjük a user posztjait
     const postsRef = collection(firestore, "users", userData.id, "posts");
     const postsQuery = query(
         postsRef,

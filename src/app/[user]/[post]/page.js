@@ -12,15 +12,14 @@ export async function generateStaticParams() {
     });
 }
 
-
-// szerver -> kliens adatok
-export default async function ViewPost({ params }) {
-    const { user, post } = params;
+// szerver → kliens adatok
+export default async function ViewPost(props) {
+    const { user, post } = await props.params;
 
     const userData = await getUserWithUsername(user);
     if (!userData) return <main>Felhasználó nem található.</main>;
 
-    // doc ref
+    // doc referencia
     const postRef = doc(firestore, `users/${userData.id}/posts/${post}`);
     const postDoc = await getDoc(postRef);
     if (!postDoc.exists()) return <main>Poszt nem található.</main>;
@@ -34,4 +33,3 @@ export default async function ViewPost({ params }) {
         </main>
     );
 }
-
