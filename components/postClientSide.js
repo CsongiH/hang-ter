@@ -14,17 +14,16 @@ import { doc } from 'firebase/firestore';
 import { firestore } from '../lib/firebase';
 
 export default function PostClientSide(props) {
-    // path alapú doc ref
     const postRef = doc(firestore, props.path);
 
-    // realtime frissítés, fallback
+    // data hydration: ekőszö betölti régi adatot, aztán frissít ha megvan az új
     const [realtimePost] = useDocumentData(postRef);
     const post = realtimePost || props.post;
 
     return (
         <>
             <h1 className="text-3xl font-bold">{post.title}</h1>
-            <p className="text-gray-600">By @{post.username}</p>
+            <p className="text-gray-600">{post.username}</p>
             <div className="mt-4">{post.content}</div>
         </>
     );

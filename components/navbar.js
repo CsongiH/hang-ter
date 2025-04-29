@@ -41,13 +41,17 @@ export default function Navbar() {
                 </li>
 
 
-
+                {/* ******************************************************************
+                bejelentezés check
+                ha létzik username -> Admin(isAdmin) alapján <- nincs még kész
+                nem létezik username -> logmein (kezeli, ha user van de username nincs)
+                ******************************************************************* */}
 
                 {
-                    //bejelentezés check
                     username && (
                         <>
                             <li>
+                                {/*FIREBASE isAdmin ALAPJÁN ADMIN CHECK <- nincs még kész*/}
                                     <Link href="/admin">
                                         <button>Admin</button>
                                     </Link>
@@ -55,7 +59,8 @@ export default function Navbar() {
 
                             <li>
                                 <Link href={`/${username}`}>
-                                    <img src={user?.photoURL || "/user-icon-placeholder.png"} />
+                                    <img src={user?.photoURL || "/user-icon-placeholder.png"} alt={"User profile picture"}/>
+                                    {/* alt tagek magyarul vagy angolul?? */}
                                 </Link>
                             </li>
                         </>

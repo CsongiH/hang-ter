@@ -90,9 +90,8 @@ function NewPost() {
                 onChange={e => setTitle(e.target.value)}
                 placeholder="Hirdetés neve"
             />
-            <p><strong>Slug:</strong> {slug}</p>
             <button type="submit" disabled={!isValid} className="btn-green">
-                Poszt publikálása
+                Poszt létrehozása
             </button>
         </form>
     );

@@ -11,27 +11,27 @@ import { debounce } from "next/dist/server/utils";
 import { doc, getDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
 
 
-// Bejelentkezés Google gomb
+{/* bejelentkezés után dolbjon át a /user oldalra <- EZ MÉG NINCS MEG*/}
 export function LogInButton() {
     const [signInWithGoogle, _, loading, error] = useSignInWithGoogle(auth);
 
     if (loading) return <button disabled>Bejelentkezés folyamatban</button>;
     if (error) return <p>Hiba: {error.message}</p>;
 
-    return (
-        <button className="btn-google" onClick={() => signInWithGoogle()}>
+    else return (
+        <button className="btn" onClick={() => signInWithGoogle()}>
             <img src={'/google-logo.svg'} width="30px" alt="Google logo"/>
             Bejelentkezés Google fiókkal
         </button>
     );
 }
 
-// Kijelentkezés gomb
+// Kijelentkezés után dobjon a főoldalra vagy a /logmein pagere
 export function LogOutButton() {
     return <button onClick={() => signOut(auth)}>Kijelentkezés</button>
 }
 
-// Felhasználónév űrlap
+// ha van user, de nincs username, akkor kell ez a form
 export function UsernameForm() {
     const [formValue, setFormValue] = useState('');
     const [isValid, setIsValid] = useState(false);
@@ -42,11 +42,11 @@ export function UsernameForm() {
     const onSubmit = async (e) => {
         e.preventDefault();
 
-        // Create refs for both documents
+
         const userDoc = doc(firestore, 'users', user.uid);
         const usernameDoc = doc(firestore, 'usernames', formValue);
 
-        // Commit both docs together as a batch write.
+        //batcheli a userDocot meg  a usernameDocot
         const batch = writeBatch(firestore);
         batch.set(userDoc, {
             username: formValue,
@@ -61,7 +61,7 @@ export function UsernameForm() {
     };
 
     const onChange = (e) => {
-        // nézz utána a validateFormat hogy működik
+        {/* 3-15 karakter között betűk számok . _ (nem lehet dupla .. és __ ,  szöveg közben kell lennie) nem is enged invalid inputot*/}
         const val = e.target.value.toLowerCase();
         const validateFormat = /^(?=[a-zA-Z0-9._]{3,15}$)(?!.*[_.]{2})[^_.].*[^_.]$/;
 
@@ -108,7 +108,8 @@ export function UsernameForm() {
                     Kiválaszt
                 </button>
                 <div align="right">
-                    <h3>Debug infók</h3>
+                    {/* ezt majd ki kell venni */}
+                    <h3>Debug infók </h3>
 
                     Felhasználónév: {formValue}
                     <br />
@@ -120,15 +121,15 @@ export function UsernameForm() {
         </section>
     )
 }
-
+//dinamikus username info
 export function FelhasznaloNevUzenet({ username, isValid, loading }) {
     if (loading) {
         return <p>Ellenőrzés...</p>;
     } else if (isValid) {
         return <p className="text-success">{username} elérhető!</p>;
     } else if (username && !isValid) {
-        return <p className="text-danger">Ez a felhasználónév már foglalt!</p>;
+        return <p className="text-danger">Ez a felhasználónév már használt</p>;
     } else {
-        return <p></p>;
+        return <p className="text-danger">A felhasználónév hossza nem megengedett: 3-15 karakter</p>;
     }
 }

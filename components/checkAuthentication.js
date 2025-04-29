@@ -6,9 +6,12 @@ import {useUserContext} from "../lib/AuthContext";
 
 export default function CheckAuthentication(props) {
     const { username } = useUserContext();
-    // ha nincs username, fallback vagy login link
+    // ha nincs username login gombot dob <-ehelyett dojon egyől a /logmein re
     return username
-        ? props.children
-        : props.fallback
-        || <Link href="/logmein">Login</Link>;
+        ?
+        props.children
+        :
+        <Link href="/logmein">
+        <button>Bejelentkezés</button>
+        </Link>;
 }

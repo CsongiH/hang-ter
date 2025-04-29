@@ -1,18 +1,22 @@
-
 /*
 * app/page
 * feed
 * postLoader
 * postContents
 * postClientside
+* postLoaderClientSide
 * nagy káosz, egyszerűsíteni kell
 * */
 import { firestore } from "../../lib/firebase";
 import { collectionGroup, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { jsonConvert } from "../../lib/firebase";
-import PostLoader from "../../components/postLoader"; // renamed import
+// új kliens wrapper
+import ClientPostLoader from "../../components/postLoaderClientSide";
+
 
 const nrOfPosts = 10;
+
+//ezt illene valahova átvinni ha újragondolom a posztos fájlokat
 
 export default async function HomePage() {
     const postsQuery = query(
@@ -27,7 +31,7 @@ export default async function HomePage() {
 
     return (
         <main>
-            <PostLoader initialPosts={posts} />
+            <ClientPostLoader initialPosts={posts} />
         </main>
     );
 }
