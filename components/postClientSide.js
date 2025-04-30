@@ -16,7 +16,7 @@ import { firestore } from '../lib/firebase';
 export default function PostClientSide(props) {
     const postRef = doc(firestore, props.path);
 
-    // data hydration: ekőszö betölti régi adatot, aztán frissít ha megvan az új
+    // data hydration: először betölti régi adatot, aztán frissít ha megvan az új
     const [realtimePost] = useDocumentData(postRef);
     const post = realtimePost || props.post;
 

@@ -10,9 +10,10 @@ import { LogOutButton } from "../../../components/LogInButtons";
 export default async function UserPage(props) {
     const { user: username } = await props.params;
 
+    {/* notFound() dob 404re */}
     const userData = await getUserWithUsername(username);
     if (!userData) {
-        notFound();  // nincs ilyen user → 404
+        notFound();
     }
 
     // lekérjük a user posztjait

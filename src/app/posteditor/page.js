@@ -26,8 +26,8 @@ export default function EditorPostsPage() {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        async function fetchGlobalPosts() {
-            // globális, publikált posztok
+        async function getPosts() {
+            //csak publikált posztok
             const postsQuery = query(
                 collectionGroup(firestore, 'posts'),
                 where('published', '==', true),
@@ -38,7 +38,7 @@ export default function EditorPostsPage() {
             setPosts(snap.docs.map(jsonConvert));
             setIsLoading(false);
         }
-        fetchGlobalPosts();
+        getPosts();
     }, []);
 
     return (
@@ -58,10 +58,9 @@ function NewPost() {
     const { username } = useContext(UserContext);
     const [title, setTitle] = useState('');
 
-    // URL-barát slug
     const slug = encodeURI(kebabCase(title));
     const isValid = title.length > 3 && title.length < 100;
-
+    {/* e.preventDefault miatt nem tolt ujra az oldal egybol */}
     const createPost = async e => {
         e.preventDefault();
         const uid = auth.currentUser.uid;
@@ -73,13 +72,13 @@ function NewPost() {
             uid,
             username,
             published: false,
-            content: '# hello world!',
+            content: 'Add meg a posztod leírását',
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
         };
 
         await setDoc(ref, data);
-        toast.success('Poszt létrehozva!');  // sikerüzenet
+        toast.success('Poszt létrehozva!');
         router.push(`/posteditor/${slug}`);
     };
 

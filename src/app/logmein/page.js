@@ -1,5 +1,13 @@
 //fireBs verzió 9
 
+
+{/* ***************************
+
+ IMPORTOKAT FEL KELL TAKARÍTANI
+
+ ****************************-*/}
+
+
 'use client';
 //firebase importok
 import { auth, googleAuthProvider, firestore } from '../../../lib/firebase';
@@ -16,8 +24,6 @@ import {LogInButton, LogOutButton, UsernameForm, FelhasznaloNevUzenet} from "../
 export default function LogMeIn() {
 
     const {user, username} = useContext(UserContext);
-    //const username = "test";
-    //ha username nem test, rakd vissza a useContextbe
 
     console.log('Current user:', user);
     console.log('Current username:', username);
