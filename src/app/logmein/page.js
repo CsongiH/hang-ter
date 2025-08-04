@@ -1,3 +1,4 @@
+'use client';
 //fireBs verzió 9
 
 
@@ -8,7 +9,7 @@
  ****************************-*/}
 
 
-'use client';
+
 //firebase importok
 import { auth, googleAuthProvider, firestore } from '../../../lib/firebase';
 import { useSignInWithGoogle } from "react-firebase-hooks/auth";

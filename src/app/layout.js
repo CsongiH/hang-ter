@@ -15,7 +15,7 @@ export default function RootLayout({ children }) {
                 style: {
                     padding: '16px',
                     color: '#ffffff',
-                    backgroundColor: '#000000',
+                    backgroundColor: '#000000ff',
                 },
             }
             }
