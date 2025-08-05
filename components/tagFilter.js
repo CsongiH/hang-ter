@@ -2,86 +2,96 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Select from 'react-select';
+import { instrumentOptions } from '../components/tags/instruments';
+import { settlements } from '../components/tags/settlements';
 
-const instrumentOptions = ['guitar', 'drum', 'bass', 'vocal'];
-const cityOptions = ['Budapest', 'Székesfehérvár', 'Győr'];
-const typeOptions = ['looking-for-band', 'looking-for-musician'];
+
+const cityOptions = settlements;
+
+const typeOptions = [
+  { value: 'looking-for-band', label: 'Looking for a band' },
+  { value: 'looking-for-musician', label: 'Looking for a musician' },
+];
 
 export default function TagFilter() {
   const router = useRouter();
-  const [instruments, setInstruments] = useState([]); // tömb a multi‐selecthez
-  const [cities, setCities] = useState([]); // tömb a multi‐selecthez
-  const [type, setType] = useState(''); // string, egy választás
 
-  const toggleInstrument = i => {
-    setInstruments(prev =>
-      prev.includes(i)
-        ? prev.filter(x => x !== i)
-        : [...prev, i]
-    );
-  };
+  // multi-select state
+  const [instruments, setInstruments] = useState([]);
+  const [cities, setCities] = useState([]);
+  // single-select state
+  const [type, setType] = useState('');
 
-  const toggleCity = c => {
-    setCities(prev =>
-      prev.includes(c)
-        ? prev.filter(x => x !== c)
-        : [...prev, c]
-    );
-  };
-
-  const onSubmit = e => {
+  const onSubmit = (e) => {
     e.preventDefault();
     const params = new URLSearchParams();
-    if (instruments.length) params.set('instrument', instruments.join(','));
-    if (cities.length) params.set('city', cities.join(','));
-    if (type) params.set('type', type);
+
+    // ha van kiválasztott instrument
+    if (instruments.length) {
+      params.set(
+        'instrument',
+        instruments.map(i => i.value).join(',')
+      );
+    }
+    // ha van kiválasztott city
+    if (cities.length) {
+      params.set(
+        'city',
+        cities.map(c => c.value).join(',')
+      );
+    }
+    // ha van type
+    if (type) {
+      params.set('type', type);
+    }
+
     router.push(`/search?${params.toString()}`);
   };
 
   return (
-    <form onSubmit={onSubmit} className="mb-4">
-      {/* instrument multi‐select */}
+    <form onSubmit={onSubmit} className="mb-4 space-y-4">
+      {/* instrument multi-searchable dropdown */}
       <div>
-        <label>Instrumentum</label>
-        {instrumentOptions.map(i => (
-          <label key={i} className="mr-2">
-            <input
-              type="checkbox"
-              checked={instruments.includes(i)}
-              onChange={() => toggleInstrument(i)}
-            />
-            {i}
-          </label>
-        ))}
+        <label>Hangszerek</label>
+        <Select
+          isMulti
+          isSearchable
+          options={instrumentOptions}
+          value={instruments}
+          onChange={setInstruments}
+          className="mt-1"
+        />
       </div>
 
-      {/* city multi‐select */}
+      {/* city multi-searchable dropdown */}
       <div>
         <label>Város</label>
-        {cityOptions.map(c => (
-          <label key={c} className="mr-2">
-            <input
-              type="checkbox"
-              checked={cities.includes(c)}
-              onChange={() => toggleCity(c)}
-            />
-            {c}
-          </label>
-        ))}
+        <Select
+          isMulti
+          isSearchable
+          options={cityOptions}
+          value={cities}
+          onChange={setCities}
+          className="mt-1"
+        />
       </div>
 
-      {/* type single‐select */}
+      {/* type single-select dropdown */}
       <div>
         <label>Típus</label>
-        <select value={type} onChange={e => setType(e.target.value)}>
-          <option value="">Minden</option>
-          {typeOptions.map(t => (
-            <option key={t} value={t}>{t}</option>
-          ))}
-        </select>
+        <Select
+          options={typeOptions}
+          value={typeOptions.find(t => t.value === type)}
+          onChange={opt => setType(opt?.value || '')}
+          className="mt-1"
+        />
       </div>
 
-      <button type="submit" className="btn mt-2">🔍</button>
+      {/* keresés indítása */}
+      <button type="submit" className="btn mt-2">
+        Keresés
+      </button>
     </form>
   );
 }

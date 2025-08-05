@@ -1,42 +1,60 @@
-/*
-* app/page
-* feed
-* postLoader
-* postContents
-* postClientside
-* postLoaderClientSide
-* nagy káosz, egyszerűsíteni kell
-* */
 import { firestore } from "../../lib/firebase";
-import { collectionGroup, query, where, orderBy, limit, getDocs } from "firebase/firestore";
+import {
+    collectionGroup,
+    query,
+    where,
+    orderBy,
+    limit,
+    getDocs
+} from "firebase/firestore";
 import { jsonConvert } from "../../lib/firebase";
-// új kliens wrapper
+import TagFilter from "../../components/tagFilter";
 import ClientPostLoader from "../../components/postLoaderClientSide";
-import { TagFilter } from "../../components/tagFilter";
 
+export default async function SearchPage({ searchParams }) {
+    // URL?instrument=guitar,drum&city=Budapest,Győr&type=looking-for-band
+    const { instrument, city, type } = searchParams;
 
+    // helper: parse comma‐separated into array
+    const parseList = val =>
+        typeof val === 'string' && val.length
+            ? val.split(',').map(s => s.trim())
+            : [];
 
-const nrOfPosts = 10;
+    const instruments = parseList(instrument);
+    const cities = parseList(city);
 
-//ezt illene valahova átvinni ha újragondolom a posztos fájlokat
+    // build dynamic filters
+    const filters = [];
+    if (instruments.length) {
+        // OR logic across multiple instruments
+        filters.push(where('instrumentTags', 'array-contains-any', instruments));
+    }
+    if (cities.length) {
+        // OR logic across multiple cities
+        filters.push(where('cityTags', 'array-contains-any', cities));
+    }
+    if (type) {
+        // single-select filter
+        filters.push(where('postType', '==', type));
+    }
 
-export default async function HomePage() {
+    // if no filters, you might want to show all or prompt user
+    const baseQuery = collectionGroup(firestore, 'posts');
     const postsQuery = query(
-        collectionGroup(firestore, "posts"),
-        where("published", "==", true),
-        orderBy("createdAt", "desc"),
-        limit(nrOfPosts)
+        baseQuery,
+        ...filters,
+        orderBy('createdAt', 'desc'),
+        limit(20)
     );
 
-    const querySnapshot = await getDocs(postsQuery);
-    const posts = querySnapshot.docs.map(jsonConvert);
+    const snap = await getDocs(postsQuery);
+    const posts = snap.docs.map(jsonConvert);
 
     return (
-
-
-
-        <main>
-            <TagFilter />
+        <main className="p-4">
+            <TagFilter />           {/* kliens oldali szűrő UI */}
+            <h1>Results</h1>
             <ClientPostLoader initialPosts={posts} />
         </main>
     );
