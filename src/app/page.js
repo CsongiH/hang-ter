@@ -12,6 +12,8 @@ import { collectionGroup, query, where, orderBy, limit, getDocs } from "firebase
 import { jsonConvert } from "../../lib/firebase";
 // új kliens wrapper
 import ClientPostLoader from "../../components/postLoaderClientSide";
+import { TagFilter } from "../../components/tagFilter";
+
 
 
 const nrOfPosts = 10;
@@ -30,7 +32,11 @@ export default async function HomePage() {
     const posts = querySnapshot.docs.map(jsonConvert);
 
     return (
+
+
+
         <main>
+            <TagFilter />
             <ClientPostLoader initialPosts={posts} />
         </main>
     );
