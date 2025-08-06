@@ -1,23 +1,28 @@
 /*
-* app/page
-* feed
-* postLoader
-* postContents
-* postClientside
-* nagy káosz, egyszerűsíteni kell
+* app/search/page
+* tagFilter
+* postLoaderClientSide
+* multi‐tag OR search
 * */
+import { firestore } from "../../../lib/firebase";
+import {
+    collectionGroup,
+    query,
+    where,
+    orderBy,
+    limit,
+    getDocs
+} from "firebase/firestore";
+import { jsonConvert } from "../../../lib/firebase";
+import TagFilter from "../../../components/tagFilter";
+import ClientPostLoader from "../../../components/postLoaderClientSide";
 
-import { collectionGroup, query, where, orderBy, limit, getDocs } from "firebase/firestore";
-import { jsonConvert, firestore } from "../../lib/firebase";
-import TagFilter from "../../components/tagFilter";
-import ClientPostLoader from "../../components/postLoaderClientSide";
-
-export default async function HomePage(props) {
+export default async function SearchPage(props) {
     // props must be awaited so Next.js resolves searchParams
     const { searchParams } = await props;
     const { instrument, city, type } = searchParams;
 
-    // helper: parse comma-separated into array
+    // helper: parse CSV → array
     const parseList = val =>
         typeof val === "string" && val.length
             ? val.split(",").map(s => s.trim())

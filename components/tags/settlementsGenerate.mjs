@@ -1,3 +1,15 @@
+/*
+
+ezzel tudod futtatni:
+
+node settlementsGenerate.mjs
+
+*/
+
+
+
+
+
 // generateSettlements.mjs
 import fs from 'fs';
 import path from 'path';

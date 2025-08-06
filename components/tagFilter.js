@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Select from 'react-select';
-import { instrumentOptions } from '../components/tags/instruments';
-import { settlements } from '../components/tags/settlements';
+import { instrumentOptions } from './tags/instruments';
+import { settlements } from './tags/settlements';
 
 
 const cityOptions = settlements;
