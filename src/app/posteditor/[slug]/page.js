@@ -1,19 +1,18 @@
 'use client';
 
-{/* ezekből szerintem egy csomó felesleges */ }
-import CheckAuthentication from '../../../../components/checkAuthentication';
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useDocumentData } from 'react-firebase-hooks/firestore';
 import { useForm, Controller } from 'react-hook-form';
-import { toast, Toaster } from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
 
+import CheckAuthentication from '../../../../components/checkAuthentication';
+import Spinner from '../../../../components/spinner';
+import Select from 'react-select';
 import { UserContext } from '../../../../lib/AuthContext';
 import { firestore, auth, serverTimestamp } from '../../../../lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
-
-import Select from 'react-select';
 import { instrumentOptions } from '../../../../components/tags/instruments';
 import { settlements as cityOptions } from '../../../../components/tags/settlements';
 
@@ -22,66 +21,68 @@ const typeOptions = [
     { value: 'looking-for-musician', label: 'Looking for a musician' },
 ];
 
-{/* ha nincs user, login gombot dob a <CA> miatt */ }
 export default function AdminPostEdit() {
     return (
         <CheckAuthentication>
             <PostManager />
-            <Toaster /> {/* toast konténer */}
+            <Toaster />
         </CheckAuthentication>
     );
 }
 
 function PostManager() {
-    {/* Beolvassa a firestore adatokat */ }
+    const router = useRouter();
     const { slug } = useParams();
     const { username } = useContext(UserContext);
     const postRef = doc(firestore, 'users', auth.currentUser.uid, 'posts', slug);
-    const [post] = useDocumentData(postRef);
+    const [post, loading] = useDocumentData(postRef);
 
-    {/* Poszt editor form */ }
+    // ha nem létezik a poszt, 404-re irányít
+    useEffect(() => {
+        if (!loading && post === undefined) {
+            router.replace('/404');
+        }
+    }, [loading, post, router]);
+
+    if (loading) {
+        return <Spinner show />;
+    }
+    if (!post) {
+        return null;
+    }
+
     return (
         <main className="p-4">
-            {post && (
-                <>
-                    <section>
-                        <h1 className="text-3xl font-bold">{post.title}</h1>
-                        <PostForm
-                            postRef={postRef}
-                            defaultValues={{
-                                content: post.content,
-                                instrumentTags: post.instrumentTags || [],
-                                cityTags: post.cityTags || [],
-                                postType: post.postType || ''
-                            }}
-                        />
-                    </section>
-                    <aside>
-                        <Link href={`/${username}/${slug}`}>
-                            <button className="btn-blue">Ugrás a posztra</button>
-                        </Link>
-                    </aside>
-                </>
-            )}
+            <section>
+                <h1 className="text-3xl font-bold">{post.title}</h1>
+                <PostForm
+                    postRef={postRef}
+                    defaultValues={{
+                        content: post.content,
+                        instrumentTags: post.instrumentTags || [],
+                        cityTags: post.cityTags || [],
+                        postType: post.postType || ''
+                    }}
+                />
+            </section>
+            <aside>
+                <Link href={`/${username}/${slug}`}>
+                    <button className="btn-blue">Ugrás a posztra</button>
+                </Link>
+            </aside>
         </main>
     );
 }
 
-{/* markdown previewből maradt dolgok, majd vedd ki ha biztos nem kell */ }
 function PostForm({ defaultValues, postRef }) {
     const {
         register,
         handleSubmit,
         reset,
-        watch,
         control,
         formState: { errors, isValid, isDirty }
-    } = useForm({
-        defaultValues,
-        mode: 'onChange'
-    });
+    } = useForm({ defaultValues, mode: 'onChange' });
 
-    {/* Ez küldi fel firestoreba */ }
     const updatePost = async data => {
         await updateDoc(postRef, {
             content: data.content,
@@ -97,21 +98,18 @@ function PostForm({ defaultValues, postRef }) {
 
     return (
         <form onSubmit={handleSubmit(updatePost)}>
-            <div>
-                {/* szöveg formai feltételei */}
-                <textarea style={{ background: 'black', color: 'white' }}
-                    {...register('content', {
-                        required: { value: true, message: 'Tartalom megadása kötelező! Min:10' },
-                        minLength: { value: 10, message: 'Tartalom túl rövid! Min:10' },
-                        maxLength: { value: 20000, message: 'Tartalom túl hosszú! Max:20000' }
-                    })}
-                />
-                {errors.content && (
-                    <p className="text-danger">{errors.content.message}</p>
-                )}
-            </div>
+            <textarea
+                style={{ background: 'black', color: 'white' }}
+                {...register('content', {
+                    required: { value: true, message: 'Tartalom megadása kötelező! Min:10' },
+                    minLength: { value: 10, message: 'Tartalom túl rövid! Min:10' },
+                    maxLength: { value: 20000, message: 'Tartalom túl hosszú! Max:20000' }
+                })}
+            />
+            {errors.content && (
+                <p className="text-danger">{errors.content.message}</p>
+            )}
 
-            {/* hangszer multi-select */}
             <div className="mt-4">
                 <label>Hangszerek</label>
                 <Controller
@@ -128,7 +126,6 @@ function PostForm({ defaultValues, postRef }) {
                 />
             </div>
 
-            {/* város multi-select */}
             <div className="mt-4">
                 <label>Város</label>
                 <Controller
@@ -145,7 +142,6 @@ function PostForm({ defaultValues, postRef }) {
                 />
             </div>
 
-            {/* típus single-select */}
             <div className="mt-4">
                 <label>Típus</label>
                 <Controller

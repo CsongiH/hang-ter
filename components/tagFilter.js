@@ -61,6 +61,7 @@ export default function TagFilter() {
           value={instruments}
           onChange={setInstruments}
           className="mt-1"
+          classNamePrefix="react-select"
         />
       </div>
 
@@ -74,6 +75,7 @@ export default function TagFilter() {
           value={cities}
           onChange={setCities}
           className="mt-1"
+          classNamePrefix="react-select"
         />
       </div>
 
@@ -85,6 +87,7 @@ export default function TagFilter() {
           value={typeOptions.find(t => t.value === type)}
           onChange={opt => setType(opt?.value || '')}
           className="mt-1"
+          classNamePrefix="react-select"
         />
       </div>
 
