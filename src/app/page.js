@@ -4,33 +4,55 @@
 * postLoader
 * postContents
 * postClientside
-* postLoaderClientSide
 * nagy káosz, egyszerűsíteni kell
 * */
-import { firestore } from "../../lib/firebase";
+
 import { collectionGroup, query, where, orderBy, limit, getDocs } from "firebase/firestore";
-import { jsonConvert } from "../../lib/firebase";
-// új kliens wrapper
+import { jsonConvert, firestore } from "../../lib/firebase";
+import TagFilter from "../../components/tagFilter";
 import ClientPostLoader from "../../components/postLoaderClientSide";
 
+export default async function HomePage(props) {
+    // props must be awaited so Next.js resolves searchParams
+    const { searchParams } = await props;
+    const { instrument, city, type } = searchParams;
 
-const nrOfPosts = 10;
+    // helper: parse comma-separated into array
+    const parseList = val =>
+        typeof val === "string" && val.length
+            ? val.split(",").map(s => s.trim())
+            : [];
 
-//ezt illene valahova átvinni ha újragondolom a posztos fájlokat
+    const instruments = parseList(instrument);
+    const cities = parseList(city);
 
-export default async function HomePage() {
+    // build dynamic filters
+    const filters = [];
+    if (instruments.length) {
+        filters.push(where("instrumentTags", "array-contains-any", instruments));
+    }
+    if (cities.length) {
+        filters.push(where("cityTags", "array-contains-any", cities));
+    }
+    if (type) {
+        filters.push(where("postType", "==", type));
+    }
+
+    const baseQuery = collectionGroup(firestore, "posts");
     const postsQuery = query(
-        collectionGroup(firestore, "posts"),
-        where("published", "==", true),
+        baseQuery,
+        ...filters,
         orderBy("createdAt", "desc"),
-        limit(nrOfPosts)
+        limit(20)
     );
 
-    const querySnapshot = await getDocs(postsQuery);
-    const posts = querySnapshot.docs.map(jsonConvert);
+    const snap = await getDocs(postsQuery);
+    const posts = snap.docs.map(jsonConvert);
 
     return (
-        <main>
+        <main className="p-4">
+            <TagFilter />
+            <h1>Results</h1>
             <ClientPostLoader initialPosts={posts} />
         </main>
     );

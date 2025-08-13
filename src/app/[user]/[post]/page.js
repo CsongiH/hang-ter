@@ -1,6 +1,7 @@
 import { getUserWithUsername, jsonConvert, firestore } from "../../../../lib/firebase";
 import { doc, getDoc, collectionGroup, getDocs } from "firebase/firestore";
 import PostClientSide from "../../../../components/postClientSide"; // kliens rész
+import { notFound } from "next/navigation";
 
 //legenralja a pathet
 export async function generateStaticParams() {
@@ -17,12 +18,12 @@ export default async function ViewPost(props) {
     const { user, post } = await props.params;
 
     const userData = await getUserWithUsername(user);
-    if (!userData) return <main>Felhasználó nem található.</main>;
+    if (!userData) return notFound();
 
 
     const postRef = doc(firestore, `users/${userData.id}/posts/${post}`);
     const postDoc = await getDoc(postRef);
-    if (!postDoc.exists()) return <main>Poszt nem található.</main>;
+    if (!postDoc.exists()) return notFound();
 
     const postData = jsonConvert(postDoc);
     const postPath = postRef.path;
