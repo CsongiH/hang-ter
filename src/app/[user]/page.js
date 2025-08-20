@@ -6,11 +6,12 @@ import Feed from "../../../components/feed";
 import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { firestore } from "../../../lib/firebase";
 import { LogOutButton } from "../../../components/LogInButtons";
+import Link from "next/link";
 
 export default async function UserPage(props) {
     const { user: username } = await props.params;
 
-    {/* notFound() dob 404re */}
+    {/* notFound() dob 404re */ }
     const userData = await getUserWithUsername(username);
     if (!userData) {
         notFound();
@@ -31,6 +32,9 @@ export default async function UserPage(props) {
     return (
         <main>
             <Profile user={user} />
+            <Link href="/editprofile">
+                <button>Profil szerkesztése</button>
+            </Link>
             <LogOutButton />
             <Feed posts={posts} />
         </main>
