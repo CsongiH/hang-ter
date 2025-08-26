@@ -1,12 +1,12 @@
 'use client';
 
 import Link from "next/link";
-import {UserContext} from "../lib/AuthContext";
-import {useContext} from "react";
+import { UserContext } from "../lib/AuthContext";
+import { useContext } from "react";
 
 export default function Navbar() {
 
-    const {user, username} = useContext(UserContext);
+    const { user, username } = useContext(UserContext);
 
     /*
         const user = null;
@@ -17,7 +17,7 @@ export default function Navbar() {
 
     return (
 
-        <nav className="navbar">
+        <nav className="navbar sticky">
             <ul>
                 <li>
                     <Link href="/">
@@ -52,14 +52,14 @@ export default function Navbar() {
                         <>
                             <li>
                                 {/*FIREBASE isAdmin ALAPJÁN ADMIN CHECK <- nincs még kész*/}
-                                    <Link href="/admin">
-                                        <button>Admin</button>
-                                    </Link>
+                                <Link href="/admin">
+                                    <button>Admin</button>
+                                </Link>
                             </li>
 
                             <li>
                                 <Link href={`/${username}`}>
-                                    <img src={user?.photoURL || "/user-icon-placeholder.png"} alt={"User profile picture"}/>
+                                    <img src={user?.photoURL || "/user-icon-placeholder.png"} alt={"User profile picture"} />
                                     {/* alt tagek magyarul vagy angolul?? */}
                                 </Link>
                             </li>
