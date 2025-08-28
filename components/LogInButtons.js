@@ -1,17 +1,17 @@
 'use client';
-//firebase importok
-import { auth, googleAuthProvider, firestore } from '../lib/firebase';
+
+import { auth, firestore } from '../lib/firebase';
 import { useSignInWithGoogle } from "react-firebase-hooks/auth";
-import { signInWithPopup, signOut } from "firebase/auth";
-// user context importok
-import {UserContext} from "../lib/AuthContext";
-import {useCallback, useContext, useEffect, useState} from "react";
-//lodash helyett NEXTJS saját debouncer
+import { signOut } from "firebase/auth";
+
+import { UserContext } from "../lib/AuthContext";
+import { useCallback, useContext, useEffect, useState } from "react";
+
 import { debounce } from "next/dist/server/utils";
 import { doc, getDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
 
 
-{/* bejelentkezés után dolbjon át a /user oldalra <- EZ MÉG NINCS MEG*/}
+{/* bejelentkezés után dolbjon át a /user oldalra <- EZ MÉG NINCS MEG*/ }
 export function LogInButton() {
     const [signInWithGoogle, _, loading, error] = useSignInWithGoogle(auth);
 
@@ -20,18 +20,16 @@ export function LogInButton() {
 
     else return (
         <button className="btn" onClick={() => signInWithGoogle()}>
-            <img src={'/google-logo.svg'} width="30px" alt="Google logo"/>
+            <img src={'/google-logo.svg'} width="30px" alt="Google logo" />
             Bejelentkezés Google fiókkal
         </button>
     );
 }
 
-// Kijelentkezés után dobjon a főoldalra vagy a /logmein pagere
 export function LogOutButton() {
     return <button onClick={() => signOut(auth)}>Kijelentkezés</button>
 }
 
-// ha van user, de nincs username, akkor kell ez a form
 export function UsernameForm() {
     const [formValue, setFormValue] = useState('');
     const [isValid, setIsValid] = useState(false);
@@ -42,11 +40,8 @@ export function UsernameForm() {
     const onSubmit = async (e) => {
         e.preventDefault();
 
-
         const userDoc = doc(firestore, 'users', user.uid);
         const usernameDoc = doc(firestore, 'usernames', formValue);
-
-        //batcheli a userDocot meg  a usernameDocot
         const batch = writeBatch(firestore);
         batch.set(userDoc, {
             username: formValue,
@@ -61,7 +56,7 @@ export function UsernameForm() {
     };
 
     const onChange = (e) => {
-        {/* 3-15 karakter között betűk számok . _ (nem lehet dupla .. és __ ,  szöveg közben kell lennie) nem is enged invalid inputot*/}
+        {/* 3-15 karakter között betűk számok . _ (nem lehet dupla .. és __ ,  szöveg közben kell lennie) nem is enged invalid inputot*/ }
         const val = e.target.value.toLowerCase();
         const validateFormat = /^(?=[a-zA-Z0-9._]{3,15}$)(?!.*[_.]{2})[^_.].*[^_.]$/;
 
@@ -83,8 +78,6 @@ export function UsernameForm() {
         checkUsername(formValue);
     }, [formValue]);
 
-
-    // useCallback kell a debouncehoz
     const checkUsername = useCallback(
         debounce(async (username) => {
             if (username.length >= 3) {
@@ -108,7 +101,6 @@ export function UsernameForm() {
                     Kiválaszt
                 </button>
                 <div align="right">
-                    {/* ezt majd ki kell venni */}
                     <h3>Debug infók </h3>
 
                     Felhasználónév: {formValue}
@@ -121,7 +113,7 @@ export function UsernameForm() {
         </section>
     )
 }
-//dinamikus username info
+
 export function FelhasznaloNevUzenet({ username, isValid, loading }) {
     if (loading) {
         return <p>Ellenőrzés...</p>;

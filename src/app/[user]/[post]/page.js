@@ -1,9 +1,8 @@
 import { getUserWithUsername, jsonConvert, firestore } from "../../../../lib/firebase";
 import { doc, getDoc, collectionGroup, getDocs } from "firebase/firestore";
-import PostClientSide from "../../../../components/postClientSide"; // kliens rész
+import PostClientSide from "../../../../components/postClientSide";
 import { notFound } from "next/navigation";
 
-//legenralja a pathet
 export async function generateStaticParams() {
     const snapshot = await getDocs(collectionGroup(firestore, "posts"));
 

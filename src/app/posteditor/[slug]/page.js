@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useContext, useEffect } from 'react';
+import { useContext, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useDocumentData } from 'react-firebase-hooks/firestore';
@@ -37,7 +37,6 @@ function PostManager() {
     const postRef = doc(firestore, 'users', auth.currentUser.uid, 'posts', slug);
     const [post, loading] = useDocumentData(postRef);
 
-    // ha nem létezik a poszt, 404-re irányít
     useEffect(() => {
         if (!loading && post === undefined) {
             router.replace('/404');

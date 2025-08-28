@@ -16,31 +16,29 @@ const typeOptions = [
 export default function TagFilter() {
   const router = useRouter();
 
-  // multi-select state
   const [instruments, setInstruments] = useState([]);
   const [cities, setCities] = useState([]);
-  // single-select state
+
   const [type, setType] = useState('');
 
   const onSubmit = (e) => {
     e.preventDefault();
     const params = new URLSearchParams();
 
-    // ha van kiválasztott instrument
     if (instruments.length) {
       params.set(
         'instrument',
         instruments.map(i => i.value).join(',')
       );
     }
-    // ha van kiválasztott city
+
     if (cities.length) {
       params.set(
         'city',
         cities.map(c => c.value).join(',')
       );
     }
-    // ha van type
+
     if (type) {
       params.set('type', type);
     }
@@ -50,7 +48,7 @@ export default function TagFilter() {
 
   return (
     <form onSubmit={onSubmit} className="mb-4 space-y-4">
-      {/* instrument multi-searchable dropdown */}
+
       <div>
         <label>Hangszerek</label>
         <Select
@@ -64,7 +62,6 @@ export default function TagFilter() {
         />
       </div>
 
-      {/* city multi-searchable dropdown */}
       <div>
         <label>Város</label>
         <Select
@@ -78,7 +75,6 @@ export default function TagFilter() {
         />
       </div>
 
-      {/* type single-select dropdown */}
       <div>
         <label>Típus</label>
         <Select
@@ -90,7 +86,6 @@ export default function TagFilter() {
         />
       </div>
 
-      {/* keresés indítása */}
       <button type="submit" className="btn mt-2">
         Keresés
       </button>

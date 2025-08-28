@@ -1,7 +1,3 @@
-/*
- * app/search/page
- * multi‐tag search workaround
- * */
 import { firestore } from "../../../lib/firebase";
 import {
     collectionGroup,
@@ -15,12 +11,10 @@ import { jsonConvert } from "../../../lib/firebase";
 import TagFilter from "../../../components/tagFilter";
 import ClientPostLoader from "../../../components/postLoaderClientSide";
 
-
 export default async function SearchPage(props) {
     const { searchParams } = await props;
     const { instrument, city, type } = (await searchParams) ?? {};
 
-    // parse CSV → array
     const parseList = val =>
         typeof val === "string" && val.length
             ? val.split(",").map(s => s.trim())
@@ -29,7 +23,6 @@ export default async function SearchPage(props) {
     const instruments = parseList(instrument);
     const cities = parseList(city);
 
-    // build common clauses
     const base = collectionGroup(firestore, "posts");
     const orderClause = orderBy("createdAt", "desc");
     const typeClause = type ? [where("postType", "!=", type), orderBy("postType")] : [];
@@ -37,7 +30,6 @@ export default async function SearchPage(props) {
     let docs = [];
 
     if (instruments.length && cities.length) {
-        // 1) query by instruments
         const instSnap = await getDocs(
             query(
                 base,
@@ -47,7 +39,6 @@ export default async function SearchPage(props) {
                 limit(50)
             )
         );
-        // 2) query by cities
         const citySnap = await getDocs(
             query(
                 base,
@@ -57,7 +48,6 @@ export default async function SearchPage(props) {
                 limit(50)
             )
         );
-        // 3) intersection by doc.id
         const instIds = new Set(instSnap.docs.map(d => d.id));
         docs = citySnap.docs.filter(d => instIds.has(d.id));
 
@@ -86,7 +76,6 @@ export default async function SearchPage(props) {
         docs = snap.docs;
 
     } else {
-        // no multi‐tag filters: fallback to type only or latest
         const snap = await getDocs(
             query(
                 base,
@@ -98,7 +87,6 @@ export default async function SearchPage(props) {
         docs = snap.docs;
     }
 
-    // convert and render
     const posts = docs.map(jsonConvert);
 
     return (

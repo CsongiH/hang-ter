@@ -11,7 +11,6 @@ import { firestore, serverTimestamp } from '../../../lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 export default function EditProfilePage() {
-    // csak a saját profil – bejelentkezés kötelező
     return (
         <CheckAuthentication>
             <EditProfileForm />
@@ -20,7 +19,7 @@ export default function EditProfilePage() {
 }
 
 function EditProfileForm() {
-    const { user } = useContext(UserContext); // uid innen
+    const { user } = useContext(UserContext);
     const {
         register,
         handleSubmit,
@@ -31,11 +30,10 @@ function EditProfileForm() {
         defaultValues: {
             about: '',
             age: '',
-            role: '' // 'musician' | 'band'
+            role: ''
         }
     });
 
-    // meglévő bio betöltése
     useEffect(() => {
         if (!user) return;
         const load = async () => {
@@ -51,7 +49,6 @@ function EditProfileForm() {
         load();
     }, [user, reset]);
 
-    // mentés: bio map frissítése
     const onSubmit = async ({ about, age, role }) => {
         if (!user) return;
         const ref = doc(firestore, 'users', user.uid);
@@ -70,7 +67,7 @@ function EditProfileForm() {
         await setDoc(
             ref,
             { bio, updatedAt: serverTimestamp() },
-            { merge: true } // ne töröljön más mezőket
+            { merge: true }
         );
         toast.success('Profil frissítve');
     };
@@ -80,7 +77,6 @@ function EditProfileForm() {
             <h1 className="text-2xl font-bold mb-4">Profil szerkesztése</h1>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                {/* about me */}
                 <div>
                     <label className="block mb-1">Bemutatkozás</label>
                     <textarea
@@ -93,7 +89,6 @@ function EditProfileForm() {
                     {errors.about && <p className="text-red-500 text-sm">{errors.about.message}</p>}
                 </div>
 
-                {/* életkor – szám vagy üres */}
                 <div>
                     <label className="block mb-1">Életkor (opcionális)</label>
                     <input
@@ -115,7 +110,6 @@ function EditProfileForm() {
                     {errors.age && <p className="text-red-500 text-sm">{errors.age.message}</p>}
                 </div>
 
-                {/* szerep – egyválasztós */}
                 <div>
                     <label className="block mb-1">Szerep</label>
                     <select

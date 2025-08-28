@@ -11,13 +11,11 @@ import Link from "next/link";
 export default async function UserPage(props) {
     const { user: username } = await props.params;
 
-    {/* notFound() dob 404re */ }
     const userData = await getUserWithUsername(username);
     if (!userData) {
         notFound();
     }
 
-    // lekérjük a user posztjait
     const postsRef = collection(firestore, "users", userData.id, "posts");
     const postsQuery = query(
         postsRef,

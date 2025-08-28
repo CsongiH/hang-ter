@@ -1,11 +1,3 @@
-/*
-* app/page
-* feed
-* postLoader
-* postContents
-* postClientside
-* nagy káosz, egyszerűsíteni kell
-* */
 import { collectionGroup, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { jsonConvert, firestore } from "../../lib/firebase";
 import TagFilter from "../../components/tagFilter";

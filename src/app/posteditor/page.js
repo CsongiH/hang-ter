@@ -26,7 +26,6 @@ export default function EditorPostsPage() {
 
     useEffect(() => {
         async function getPosts() {
-            // csak publikált posztok
             const postsQuery = query(
                 collectionGroup(firestore, 'posts'),
                 where('published', '==', true),
@@ -60,7 +59,6 @@ function NewPost() {
     const slug = encodeURI(kebabCase(title));
     const isValid = title.length > 3 && title.length < 100;
 
-    {/* e.preventDefault miatt nem tölt újra az oldal egyből */ }
     const createPost = async e => {
         e.preventDefault();
         const uid = auth.currentUser.uid;
