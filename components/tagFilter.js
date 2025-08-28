@@ -6,7 +6,6 @@ import Select from 'react-select';
 import { instrumentOptions } from './tags/instruments';
 import { settlements } from './tags/settlements';
 
-
 const cityOptions = settlements;
 
 const typeOptions = [

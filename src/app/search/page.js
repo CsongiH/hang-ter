@@ -18,7 +18,7 @@ import ClientPostLoader from "../../../components/postLoaderClientSide";
 
 export default async function SearchPage(props) {
     const { searchParams } = await props;
-    const { instrument, city, type } = searchParams;
+    const { instrument, city, type } = (await searchParams) ?? {};
 
     // parse CSV → array
     const parseList = val =>
@@ -32,7 +32,7 @@ export default async function SearchPage(props) {
     // build common clauses
     const base = collectionGroup(firestore, "posts");
     const orderClause = orderBy("createdAt", "desc");
-    const typeClause = type ? [where("postType", "==", type)] : [];
+    const typeClause = type ? [where("postType", "!=", type), orderBy("postType")] : [];
 
     let docs = [];
 

@@ -13,13 +13,12 @@ export async function generateStaticParams() {
     });
 }
 
-
 export default async function ViewPost(props) {
-    const { user, post } = await props.params;
+    const { params } = await props;
+    const { user, post } = await params;
 
     const userData = await getUserWithUsername(user);
     if (!userData) return notFound();
-
 
     const postRef = doc(firestore, `users/${userData.id}/posts/${post}`);
     const postDoc = await getDoc(postRef);
@@ -31,6 +30,13 @@ export default async function ViewPost(props) {
     return (
         <main className="p-4">
             <PostClientSide path={postPath} post={postData} />
+            <details className="mt-6">
+                <summary className="cursor-pointer text-sm text-gray-500">Raw data</summary>
+                <pre className="mt-2 text-xs whitespace-pre-wrap break-words">
+                    {JSON.stringify(postData, null, 2)}
+                </pre>
+                <div className="mt-2 text-xs break-words">Path: {postPath}</div>
+            </details>
         </main>
     );
 }

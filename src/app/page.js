@@ -32,13 +32,14 @@ export default async function HomePage(props) {
         filters.push(where("cityTags", "array-contains-any", cities));
     }
     if (type) {
-        filters.push(where("postType", "==", type));
+        filters.push(where("postType", "!=", type));
     }
 
     const baseQuery = collectionGroup(firestore, "posts");
     const postsQuery = query(
         baseQuery,
         ...filters,
+        orderBy("postType"),
         orderBy("createdAt", "desc"),
         limit(20)
     );
