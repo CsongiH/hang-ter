@@ -8,7 +8,6 @@ import { useForm, Controller } from 'react-hook-form';
 import toast, { Toaster } from 'react-hot-toast';
 
 import CheckAuthentication from '../../../../components/checkAuthentication';
-import Spinner from '../../../../components/spinner';
 import Select from 'react-select';
 import { UserContext } from '../../../../lib/AuthContext';
 import { firestore, auth, serverTimestamp } from '../../../../lib/firebase';
@@ -44,7 +43,7 @@ function PostManager() {
     }, [loading, post, router]);
 
     if (loading) {
-        return <Spinner show />;
+        return;
     }
     if (!post) {
         return null;

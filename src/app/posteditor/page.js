@@ -1,7 +1,6 @@
 'use client';
 
 import CheckAuthentication from '../../../components/checkAuthentication';
-import Spinner from '../../../components/spinner';
 import PostLoader from '../../../components/postLoader';
 import { firestore, auth, serverTimestamp, jsonConvert } from '../../../lib/firebase';
 import {
@@ -43,9 +42,7 @@ export default function EditorPostsPage() {
         <main>
             <CheckAuthentication>
                 <NewPost />
-                {isLoading
-                    ? <Spinner show={true} />
-                    : <PostLoader initialPosts={posts} />}
+                <PostLoader initialPosts={posts} />
             </CheckAuthentication>
         </main>
     );

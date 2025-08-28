@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from "react";
-import Spinner from "./spinner";
 import Feed from "./feed";
 import { firestore } from "../lib/firebase";
 import {
@@ -54,7 +53,6 @@ export default function PostLoader({ initialPosts }) {
         <>
             <Feed posts={posts} />
             {!isLoading && !isEnd && <button onClick={loadNextPosts}>Több</button>}
-            <Spinner show={isLoading} />
             {isEnd && "Nincs több megjeleníthető poszt"}
         </>
     );
