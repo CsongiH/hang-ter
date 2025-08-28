@@ -6,18 +6,16 @@
 * postClientside
 * nagy káosz, egyszerűsíteni kell
 * */
-
 import { collectionGroup, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { jsonConvert, firestore } from "../../lib/firebase";
 import TagFilter from "../../components/tagFilter";
 import ClientPostLoader from "../../components/postLoaderClientSide";
 
 export default async function HomePage(props) {
-    // props must be awaited so Next.js resolves searchParams
     const { searchParams } = await props;
-    const { instrument, city, type } = searchParams;
+    const sp = await searchParams;
+    const { instrument, city, type } = sp ?? {};
 
-    // helper: parse comma-separated into array
     const parseList = val =>
         typeof val === "string" && val.length
             ? val.split(",").map(s => s.trim())
@@ -26,7 +24,6 @@ export default async function HomePage(props) {
     const instruments = parseList(instrument);
     const cities = parseList(city);
 
-    // build dynamic filters
     const filters = [];
     if (instruments.length) {
         filters.push(where("instrumentTags", "array-contains-any", instruments));
