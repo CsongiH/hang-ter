@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Select from 'react-select';
 import { instrumentOptions } from './tags/instruments';
 import { settlements } from './tags/settlements';
@@ -15,11 +15,27 @@ const typeOptions = [
 
 export default function TagFilter() {
   const router = useRouter();
+  const sp = useSearchParams();
 
   const [instruments, setInstruments] = useState([]);
   const [cities, setCities] = useState([]);
 
   const [type, setType] = useState('');
+
+  useEffect(() => {
+    const parseCsv = (s) => (s ? s.split(',').map(v => v.trim()).filter(Boolean) : []);
+
+    const instVals = parseCsv(sp.get('instrument') || '');
+    const cityVals = parseCsv(sp.get('city') || '');
+    const typeVal = sp.get('type') || '';
+
+    const instOpts = instrumentOptions.filter(o => instVals.includes(o.value));
+    const cityOpts = cityOptions.filter(o => cityVals.includes(o.value));
+
+    setInstruments(instOpts);
+    setCities(cityOpts);
+    setType(typeVal);
+  }, [sp]);
 
   const onSubmit = (e) => {
     e.preventDefault();
@@ -43,7 +59,8 @@ export default function TagFilter() {
       params.set('type', type);
     }
 
-    router.push(`/search?${params.toString()}`);
+    const qs = params.toString();
+    router.push(qs ? `/search?${qs}` : '/search');
   };
 
   return (

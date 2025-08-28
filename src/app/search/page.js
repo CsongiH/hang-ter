@@ -11,6 +11,8 @@ import { jsonConvert } from "../../../lib/firebase";
 import TagFilter from "../../../components/tagFilter";
 import ClientPostLoader from "../../../components/postLoaderClientSide";
 
+export const dynamic = "force-dynamic";
+
 export default async function SearchPage(props) {
     const { searchParams } = await props;
     const { instrument, city, type } = (await searchParams) ?? {};
@@ -88,12 +90,13 @@ export default async function SearchPage(props) {
     }
 
     const posts = docs.map(jsonConvert);
+    const key = `${instrument || "_"}-${city || "_"}-${type || "_"}`;
 
     return (
         <main className="p-4">
             <TagFilter />
             <h1>Results</h1>
-            <ClientPostLoader initialPosts={posts} />
+            <ClientPostLoader key={key} initialPosts={posts} />
         </main>
     );
 }

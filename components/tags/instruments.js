@@ -45,5 +45,6 @@ export const instrumentOptions = [
     { value: 'ukulele', label: 'Ukulele' },
     { value: 'vibrafon', label: 'Vibrafon' },
     { value: 'xilofon', label: 'Xilofon' },
-    { value: 'zongora', label: 'Zongora' }
+    { value: 'zongora', label: 'Zongora' },
+    { value: 'enek', label: 'Ének' },
 ];
