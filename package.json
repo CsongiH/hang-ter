@@ -13,6 +13,7 @@
   "dependencies": {
     "@firebase/auth": "^1.10.0",
     "@firebase/firestore": "^4.7.10",
+    "@tanstack/react-virtual": "^3.13.12",
     "firebase": "^11.6.0",
     "kebabcase": "^1.0.1",
     "lodash": "^4.17.21",
