@@ -6,14 +6,12 @@ import { useContext } from "react";
 
 export default function Navbar() {
 
-    const { user, username } = useContext(UserContext);
+    const { user, username, isAdmin } = useContext(UserContext);
 
     /*
         const user = null;
     const username = null;
      */
-
-
 
     return (
 
@@ -52,9 +50,11 @@ export default function Navbar() {
                         <>
                             <li>
                                 {/*FIREBASE isAdmin ALAPJÁN ADMIN CHECK <- nincs még kész*/}
-                                <Link href="/admin">
-                                    <button>Admin</button>
-                                </Link>
+                                {isAdmin && (
+                                    <Link href="/admin">
+                                        <button>Admin</button>
+                                    </Link>
+                                )}
                             </li>
 
                             <li>
