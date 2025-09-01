@@ -9,7 +9,7 @@ import {
 } from "firebase/firestore";
 import { jsonConvert } from "../../../lib/firebase";
 import TagFilter from "../../../components/tagFilter";
-import ClientPostLoader from "../../../components/postLoaderClientSide";
+import CardLoader from "../../../components/cardLoader";
 
 export const dynamic = "force-dynamic";
 
@@ -96,7 +96,7 @@ export default async function SearchPage(props) {
         <main className="p-4">
             <TagFilter />
             <h1>Results</h1>
-            <ClientPostLoader key={key} initialPosts={posts} />
+            <CardLoader key={key} initialPosts={posts} />
         </main>
     );
 }

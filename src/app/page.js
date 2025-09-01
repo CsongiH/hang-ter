@@ -1,7 +1,7 @@
 import { collectionGroup, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { jsonConvert, firestore } from "../../lib/firebase";
 import TagFilter from "../../components/tagFilter";
-import ClientPostLoader from "../../components/postLoaderClientSide";
+import CardLoader from "../../components/cardLoader";
 
 export default async function HomePage(props) {
     const { searchParams } = await props;
@@ -33,7 +33,7 @@ export default async function HomePage(props) {
         ...filters,
         orderBy("postType"),
         orderBy("createdAt", "desc"),
-        limit(20)
+        limit(50)
     );
 
     const snap = await getDocs(postsQuery);
@@ -43,7 +43,7 @@ export default async function HomePage(props) {
         <main className="p-4">
             <TagFilter />
             <h1>Results</h1>
-            <ClientPostLoader initialPosts={posts} />
+            <CardLoader initialPosts={posts} />
         </main>
     );
 }

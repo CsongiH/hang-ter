@@ -1,7 +1,7 @@
 'use client';
 
 import CheckAuthentication from '../../../components/checkAuthentication';
-import PostLoader from '../../../components/postLoader';
+import CardLoader from '../../../components/cardLoader';
 import { firestore, auth, serverTimestamp, jsonConvert } from '../../../lib/firebase';
 import {
     collectionGroup,
@@ -42,7 +42,7 @@ export default function EditorPostsPage() {
         <main>
             <CheckAuthentication>
                 <NewPost />
-                <PostLoader initialPosts={posts} />
+                <CardLoader initialPosts={posts} />
             </CheckAuthentication>
         </main>
     );

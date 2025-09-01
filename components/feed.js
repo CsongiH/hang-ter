@@ -6,11 +6,11 @@
 import Link from 'next/link';
 
 export default function feed({ posts, modifyPost }) {
-    return posts ? posts.map((post) => <PostContent post={post} key={post.slug} modifyPost={modifyPost} />) : null;
+    return posts ? posts.map((post) => <CardContent post={post} key={post.slug} modifyPost={modifyPost} />) : null;
 
 }
 
-function PostContent({ post, modifyPost = true }) {
+function CardContent({ post, modifyPost = true }) {
     return (
         <div className={"card"}>
             <Link href={`/${post.username}`}>
