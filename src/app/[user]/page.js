@@ -5,7 +5,7 @@ import Profile from "../../../components/profile";
 import Feed from "../../../components/feed";
 import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { firestore } from "../../../lib/firebase";
-import { LogOutButton } from "../../../components/LogInButtons";
+import { LogOutButton } from "../../../components/logInButtons";
 import Link from "next/link";
 
 export default async function UserPage(props) {

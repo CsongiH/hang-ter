@@ -1,23 +1,11 @@
 'use client';
 
-import { UserContext } from "../../../lib/AuthContext";
-import { useContext } from "react";
-import { LogInButton, LogOutButton, UsernameForm } from "../../../components/LogInButtons.js";
+import LogInButtons from '../../../components/logInButtons';
 
-export default function LogMeIn() {
-
-    const { user, username } = useContext(UserContext);
-
+export default function Page() {
     return (
-        <main>
-            <h1>LoginPage</h1>
-            {user ?
-                !username ?
-                    <UsernameForm />
-                    : <LogOutButton />
-                : <LogInButton />
-            }
-        </main>
-    )
+        <div className="p-6">
+            <LogInButtons />
+        </div>
+    );
 }
-
