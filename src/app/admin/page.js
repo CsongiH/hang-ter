@@ -10,7 +10,7 @@ import {
     query,
     limit,
     updateDoc,
-    doc
+    doc,
 } from 'firebase/firestore';
 import { firestore } from '../../../lib/firebase';
 
@@ -27,9 +27,8 @@ export default function AdminPage() {
     const [onlyRemoved, setOnlyRemoved] = useState(false);
 
     useEffect(() => {
-        if (!user || !isAdmin) {
-            router.replace('/404');
-        }
+        if (user === undefined) return;
+        if (!user || !isAdmin) router.replace('/404');
     }, [user, isAdmin, router]);
 
     useEffect(() => {
@@ -41,9 +40,9 @@ export default function AdminPage() {
                     snap.docs.map(d => ({
                         id: d.id,
                         ref: d.ref,
-                        ...d.data()
-                    }))
-                )
+                        ...d.data(),
+                    })),
+                ),
         );
         const unsubPosts = onSnapshot(
             query(collectionGroup(firestore, 'posts'), limit(500)),
@@ -52,17 +51,15 @@ export default function AdminPage() {
                     snap.docs.map(d => ({
                         id: d.id,
                         ref: d.ref,
-                        ...d.data()
-                    }))
-                )
+                        ...d.data(),
+                    })),
+                ),
         );
         return () => {
             unsubUsers?.();
             unsubPosts?.();
         };
     }, [user, isAdmin]);
-
-    if (!user || !isAdmin) return null;
 
     const filteredUsers = useMemo(() => {
         const q = userSearch.trim().toLowerCase();
@@ -73,7 +70,7 @@ export default function AdminPage() {
                 u.username?.toLowerCase(),
                 u.displayName?.toLowerCase(),
                 u.email?.toLowerCase(),
-                u.id?.toLowerCase()
+                u.id?.toLowerCase(),
             ].filter(Boolean);
             return a.some(x => x.includes(q));
         });
@@ -89,23 +86,29 @@ export default function AdminPage() {
                 p.slug?.toLowerCase(),
                 p.username?.toLowerCase(),
                 Array.isArray(p.instrumentTags) ? p.instrumentTags.join(',').toLowerCase() : '',
-                Array.isArray(p.cityTags) ? p.cityTags.join(',').toLowerCase() : ''
+                Array.isArray(p.cityTags) ? p.cityTags.join(',').toLowerCase() : '',
             ];
             return a.some(x => x && x.includes(q));
         });
     }, [posts, postSearch, onlyRemoved]);
 
-    const toggleUserBan = async (u) => {
+    const toggleUserBan = async u => {
         try {
             await updateDoc(doc(firestore, 'users', u.id), { isBanned: !u.isBanned });
         } catch { }
     };
 
-    const togglePostRemoved = async (p) => {
+    const togglePostRemoved = async p => {
         try {
             await updateDoc(p.ref, { isRemoved: !p.isRemoved });
         } catch { }
     };
+
+    const openUser = u => router.push(`/admin/users/${u.id}`);
+    const openPost = (p) => router.push(`/admin/posts/${p.ref.path}`);
+
+
+    if (!user || !isAdmin) return null;
 
     return (
         <main className="p-4">
@@ -116,7 +119,7 @@ export default function AdminPage() {
                     <div className="flex items-center gap-3 mb-3">
                         <input
                             value={userSearch}
-                            onChange={(e) => setUserSearch(e.target.value)}
+                            onChange={e => setUserSearch(e.target.value)}
                             placeholder="Keresés felhasználók között…"
                             className="input input-bordered w-full"
                         />
@@ -124,25 +127,29 @@ export default function AdminPage() {
                             <input
                                 type="checkbox"
                                 checked={onlyBanned}
-                                onChange={(e) => setOnlyBanned(e.target.checked)}
+                                onChange={e => setOnlyBanned(e.target.checked)}
                             />
                             Csak tiltottak
                         </label>
                     </div>
 
                     <div className="max-h-[70vh] overflow-auto divide-y">
-                        {filteredUsers.map((u) => (
-                            <div key={u.id} className="flex items-center justify-between py-2">
-                                <div className="min-w-0">
+                        {filteredUsers.map(u => (
+                            <div
+                                key={u.id}
+                                className="flex items-center justify-between py-2 cursor-pointer hover:bg-gray-50"
+                            >
+                                <div onClick={() => openUser(u)} className="min-w-0 flex-1">
                                     <div className="font-medium truncate">{u.username || '(nincs username)'}</div>
                                     <div className="text-xs text-gray-500 truncate">{u.email || u.id}</div>
                                 </div>
-                                <label className="inline-flex items-center gap-2">
+                                <label className="inline-flex items-center gap-2 pl-3">
                                     <span className="text-sm">{u.isBanned ? 'Tiltva' : 'Aktív'}</span>
                                     <input
                                         type="checkbox"
                                         checked={!!u.isBanned}
                                         onChange={() => toggleUserBan(u)}
+                                        onClick={e => e.stopPropagation()}
                                     />
                                 </label>
                             </div>
@@ -157,7 +164,7 @@ export default function AdminPage() {
                     <div className="flex items-center gap-3 mb-3">
                         <input
                             value={postSearch}
-                            onChange={(e) => setPostSearch(e.target.value)}
+                            onChange={e => setPostSearch(e.target.value)}
                             placeholder="Keresés posztok között…"
                             className="input input-bordered w-full"
                         />
@@ -165,15 +172,19 @@ export default function AdminPage() {
                             <input
                                 type="checkbox"
                                 checked={onlyRemoved}
-                                onChange={(e) => setOnlyRemoved(e.target.checked)}
+                                onChange={e => setOnlyRemoved(e.target.checked)}
                             />
                             Csak eltávolítottak
                         </label>
                     </div>
 
                     <div className="max-h-[70vh] overflow-auto divide-y">
-                        {filteredPosts.map((p) => (
-                            <div key={p.ref.path} className="flex items-center justify-between py-2">
+                        {filteredPosts.map(p => (
+                            <div
+                                key={p.ref.path}
+                                className="flex items-center justify-between py-2 cursor-pointer hover:bg-gray-50"
+                                onClick={() => openPost(p)}
+                            >
                                 <div className="min-w-0">
                                     <div className="font-medium truncate">{p.title || p.slug || '(cím nélkül)'}</div>
                                     <div className="text-xs text-gray-500 truncate">
@@ -188,7 +199,10 @@ export default function AdminPage() {
                                     <input
                                         type="checkbox"
                                         checked={!!p.isRemoved}
-                                        onChange={() => togglePostRemoved(p)}
+                                        onChange={e => {
+                                            e.stopPropagation();
+                                            togglePostRemoved(p);
+                                        }}
                                     />
                                 </label>
                             </div>
