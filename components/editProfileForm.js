@@ -4,16 +4,9 @@ import { useContext, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import debounce from 'lodash.debounce';
 import { toast } from 'react-hot-toast';
-
 import { UserContext } from '../lib/AuthContext';
 import { firestore } from '../lib/firebase';
-import {
-    doc,
-    getDoc,
-    setDoc,
-    runTransaction,
-    serverTimestamp,
-} from 'firebase/firestore';
+import { doc, getDoc, setDoc, runTransaction, serverTimestamp } from 'firebase/firestore';
 
 export default function EditProfileForm({ hideUsernameSetting = false, initialProfile = null, onSaved }) {
     const { user } = useContext(UserContext);
@@ -31,18 +24,20 @@ export default function EditProfileForm({ hideUsernameSetting = false, initialPr
             about: '',
             age: '',
             role: '',
-            username: ''
+            username: '',
+            instagram: '',
+            facebook: '',
+            email: '',
+            phone: ''
         }
     });
 
     const username = watch('username')?.toLowerCase() ?? '';
     const needsUsername = useMemo(() => !hideUsernameSetting && !profile?.username, [hideUsernameSetting, profile]);
 
-    // same format rule as your old UsernameForm
     const usernameFormatOk = useMemo(() => {
         if (!needsUsername) return true;
-        const re = /^(?=[a-z0-9._]{3,15}$)(?!.*[_.]{2})[^_.].*[^_.]$/;
-        return re.test(username);
+        return /^(?=[a-z0-9._]{3,15}$)(?!.*[_.]{2})[^_.].*[^_.]$/.test(username);
     }, [needsUsername, username]);
 
     const [unameLoading, setUnameLoading] = useState(false);
@@ -51,18 +46,24 @@ export default function EditProfileForm({ hideUsernameSetting = false, initialPr
     useEffect(() => {
         if (!user) return;
         const load = async () => {
-            const data = initialProfile ?? (await (async () => {
-                const ref = doc(firestore, 'users', user.uid);
-                const snap = await getDoc(ref);
-                return snap.exists() ? snap.data() : {};
-            })());
+            const data =
+                initialProfile ??
+                (await (async () => {
+                    const ref = doc(firestore, 'users', user.uid);
+                    const snap = await getDoc(ref);
+                    return snap.exists() ? snap.data() : {};
+                })());
             setProfile(data);
             const bio = data?.bio || {};
             reset({
                 about: bio.about || '',
                 age: bio.age ?? '',
                 role: bio.role || '',
-                username: ''
+                username: '',
+                instagram: bio.instagram || '',
+                facebook: bio.facebook || '',
+                email: bio.email || '',
+                phone: bio.phone || ''
             });
         };
         load();
@@ -98,34 +99,47 @@ export default function EditProfileForm({ hideUsernameSetting = false, initialPr
         return () => debouncedCheck.cancel();
     }, [username, needsUsername, debouncedCheck]);
 
-    const onSubmit = async ({ about, age, role, username }) => {
+    const onSubmit = async ({ about, age, role, username, instagram, facebook, email, phone }) => {
         if (!user) return;
 
         const ref = doc(firestore, 'users', user.uid);
         const normalizedAge =
-            age === '' || age === null || typeof age === 'undefined'
-                ? null
-                : Number(age);
+            age === '' || age === null || typeof age === 'undefined' ? null : Number(age);
 
         const bio = {
             about: (about || '').trim(),
             age: Number.isFinite(normalizedAge) ? normalizedAge : null,
-            role: role || ''
+            role: role || '',
+            instagram: (instagram || '').trim(),
+            facebook: (facebook || '').trim(),
+            email: (email || '').trim(),
+            phone: (phone || '').trim()
         };
 
         try {
             if (needsUsername) {
                 const uname = (username || '').trim().toLowerCase();
                 if (!/^(?=[a-z0-9._]{3,15}$)(?!.*[_.]{2})[^_.].*[^_.]$/.test(uname)) {
-                    throw new Error('Érvénytelen felhasználónév (3–15, a–z, 0–9, . _; nincs dupla . vagy _; nem kezdődik/végződik . vagy _).');
+                    throw new Error('Érvénytelen felhasználónév.');
                 }
-
                 const unameRef = doc(firestore, 'usernames', uname);
                 await runTransaction(firestore, async (tx) => {
                     const unameSnap = await tx.get(unameRef);
                     if (unameSnap.exists()) throw new Error('A felhasználónév foglalt.');
                     tx.set(unameRef, { uid: user.uid, createdAt: serverTimestamp() });
-                    tx.set(ref, { bio, username: uname, updatedAt: serverTimestamp(), createdAt: serverTimestamp(), photoURL: user.photoURL, displayName: user.displayName, isAdmin: false }, { merge: true });
+                    tx.set(
+                        ref,
+                        {
+                            bio,
+                            username: uname,
+                            updatedAt: serverTimestamp(),
+                            createdAt: serverTimestamp(),
+                            photoURL: user.photoURL,
+                            displayName: user.displayName,
+                            isAdmin: false
+                        },
+                        { merge: true }
+                    );
                 });
             } else {
                 await setDoc(ref, { bio, updatedAt: serverTimestamp() }, { merge: true });
@@ -151,7 +165,10 @@ export default function EditProfileForm({ hideUsernameSetting = false, initialPr
         <main className="p-4 max-w-xl">
             <h1 className="text-2xl font-bold mb-4">Profil szerkesztése</h1>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <form
+                onSubmit={handleSubmit(onSubmit)}
+                className="space-y-4"
+            >
                 {needsUsername && (
                     <div>
                         <label className="block mb-1">Felhasználónév</label>
@@ -215,10 +232,7 @@ export default function EditProfileForm({ hideUsernameSetting = false, initialPr
 
                 <div>
                     <label className="block mb-1">Szerep</label>
-                    <select
-                        className="w-full p-2 border rounded bg-white"
-                        {...register('role')}
-                    >
+                    <select className="w-full p-2 border rounded bg-white" {...register('role')}>
                         <option value="">— Válassz —</option>
                         <option value="musician">Zenész</option>
                         <option value="band">Zenekar</option>
@@ -226,20 +240,97 @@ export default function EditProfileForm({ hideUsernameSetting = false, initialPr
                     </select>
                 </div>
 
+                <div>
+                    <label className="block mb-1">Instagram</label>
+                    <input
+                        type="url"
+                        className="w-full p-2 border rounded"
+                        placeholder="https://www.instagram.com/felhasznalo"
+                        {...register('instagram', {
+                            validate: (v) => {
+                                if (!v) return true;
+                                try {
+                                    const u = new URL(v);
+                                    const h = u.hostname.toLowerCase();
+                                    const ok =
+                                        h === 'instagram.com' ||
+                                        h.endsWith('.instagram.com') ||
+                                        h === 'instagr.am' ||
+                                        h.endsWith('.instagr.am');
+                                    return ok || 'Adj meg érvényes Instagram linket.';
+                                } catch {
+                                    return 'Adj meg érvényes Instagram linket.';
+                                }
+                            }
+                        })}
+                    />
+                    {errors.instagram && <p className="text-red-500 text-sm">{errors.instagram.message}</p>}
+                </div>
+
+                <div>
+                    <label className="block mb-1">Facebook</label>
+                    <input
+                        type="url"
+                        className="w-full p-2 border rounded"
+                        placeholder="https://www.facebook.com/felhasznalo"
+                        {...register('facebook', {
+                            validate: (v) => {
+                                if (!v) return true;
+                                try {
+                                    const u = new URL(v);
+                                    const h = u.hostname.toLowerCase();
+                                    const ok = h.endsWith('facebook.com') || h.endsWith('fb.com');
+                                    return ok || 'Adj meg érvényes Facebook linket.';
+                                } catch {
+                                    return 'Adj meg érvényes Facebook linket.';
+                                }
+                            }
+                        })}
+                    />
+                    {errors.facebook && <p className="text-red-500 text-sm">{errors.facebook.message}</p>}
+                </div>
+
+                <div>
+                    <label className="block mb-1">E-mail</label>
+                    <input
+                        type="email"
+                        className="w-full p-2 border rounded"
+                        placeholder="nev@example.com"
+                        {...register('email', {
+                            validate: (v) => {
+                                if (!v) return true;
+                                return /^[^\s@]+@[^\s@]+\.[^\s@]+$/i.test(v) || 'Adj meg érvényes e-mail címet.';
+                            }
+                        })}
+                    />
+                    {errors.email && <p className="text-red-500 text-sm">{errors.email.message}</p>}
+                </div>
+
+                <div>
+                    <label className="block mb-1">Telefon</label>
+                    <input
+                        type="tel"
+                        className="w-full p-2 border rounded"
+                        placeholder="+36 30 123 4567"
+                        {...register('phone', {
+                            validate: (v) => {
+                                if (!v) return true;
+                                const digits = v.replace(/\D/g, '');
+                                if (digits.length < 7 || digits.length > 15) return 'Adj meg érvényes telefonszámot.';
+                                return /^[0-9+\s().-]+$/.test(v) || 'Adj meg érvényes telefonszámot.';
+                            }
+                        })}
+                    />
+                    {errors.phone && <p className="text-red-500 text-sm">{errors.phone.message}</p>}
+                </div>
+
                 <button
-                    type="button"
+                    type="submit"
                     disabled={submitDisabled}
-                    onClick={handleSubmit(async (values) => {
-                        await onSubmit(values);
-                        const uname = (values?.username ?? profile?.username ?? '').toLowerCase();
-                        const target = uname ? `/${uname}` : '/user';
-                        window.location.assign(target);
-                    })}
                     className="btn-green mt-2"
                 >
                     Mentés
                 </button>
-
             </form>
         </main>
     );
