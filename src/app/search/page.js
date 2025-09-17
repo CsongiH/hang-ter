@@ -32,7 +32,6 @@ export default async function SearchPage(props) {
 
     const instruments = parseList(instrument);
     const cities = parseList(city);
-    const mappedType = invertType(type);
 
     const base = collectionGroup(firestore, "posts");
 
