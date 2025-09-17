@@ -1,33 +1,46 @@
-import { firestore } from "../../../lib/firebase";
+import { firestore, jsonConvert } from "../../../lib/firebase";
 import {
     collectionGroup,
     query,
     where,
     orderBy,
     limit,
-    getDocs
+    getDocs,
 } from "firebase/firestore";
-import { jsonConvert } from "../../../lib/firebase";
 import TagFilter from "../../../components/tagFilter";
 import CardLoader from "../../../components/cardLoader";
 
 export const dynamic = "force-dynamic";
 
+const invertType = (t) =>
+    t === "looking-for-band"
+        ? "looking-for-musician"
+        : t === "looking-for-musician"
+            ? "looking-for-band"
+            : t === "concert-opportunity"
+                ? "concert-opportunity"
+                : "";
+
+const parseList = (val) =>
+    typeof val === "string" && val.length
+        ? val.split(",").map((s) => s.trim()).filter(Boolean)
+        : [];
+
 export default async function SearchPage(props) {
     const { searchParams } = await props;
     const { instrument, city, type } = (await searchParams) ?? {};
 
-    const parseList = val =>
-        typeof val === "string" && val.length
-            ? val.split(",").map(s => s.trim())
-            : [];
-
     const instruments = parseList(instrument);
     const cities = parseList(city);
+    const mappedType = invertType(type);
 
     const base = collectionGroup(firestore, "posts");
+
+    const commonClauses = [where("published", "==", true)];
+    if (mappedType) commonClauses.push(where("postType", "==", mappedType));
+
     const orderClause = orderBy("createdAt", "desc");
-    const typeClause = type ? [where("postType", "!=", type), orderBy("postType")] : [];
+    const lim = limit(50);
 
     let docs = [];
 
@@ -35,57 +48,49 @@ export default async function SearchPage(props) {
         const instSnap = await getDocs(
             query(
                 base,
-                ...typeClause,
+                ...commonClauses,
                 where("instrumentTags", "array-contains-any", instruments),
                 orderClause,
-                limit(50)
+                lim
             )
         );
+
         const citySnap = await getDocs(
             query(
                 base,
-                ...typeClause,
+                ...commonClauses,
                 where("cityTags", "array-contains-any", cities),
                 orderClause,
-                limit(50)
+                lim
             )
         );
-        const instIds = new Set(instSnap.docs.map(d => d.id));
-        docs = citySnap.docs.filter(d => instIds.has(d.id));
 
+        const instPaths = new Set(instSnap.docs.map((d) => d.ref.path));
+        docs = citySnap.docs.filter((d) => instPaths.has(d.ref.path));
     } else if (instruments.length) {
         const snap = await getDocs(
             query(
                 base,
-                ...typeClause,
+                ...commonClauses,
                 where("instrumentTags", "array-contains-any", instruments),
                 orderClause,
-                limit(50)
+                lim
             )
         );
         docs = snap.docs;
-
     } else if (cities.length) {
         const snap = await getDocs(
             query(
                 base,
-                ...typeClause,
+                ...commonClauses,
                 where("cityTags", "array-contains-any", cities),
                 orderClause,
-                limit(50)
+                lim
             )
         );
         docs = snap.docs;
-
     } else {
-        const snap = await getDocs(
-            query(
-                base,
-                ...typeClause,
-                orderClause,
-                limit(50)
-            )
-        );
+        const snap = await getDocs(query(base, ...commonClauses, orderClause, lim));
         docs = snap.docs;
     }
 
