@@ -6,41 +6,31 @@ import Select, { components } from 'react-select';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { instrumentOptions } from './tags/instruments';
 import { settlements } from './tags/settlements';
+import { typeOptions } from './tags/types';
 
-const typeOptions = [
-  { value: 'looking-for-band', label: 'Looking for a band' },
-  { value: 'looking-for-musician', label: 'Looking for a musician' },
-];
+
+const mapUIToQueryType = (v) =>
+  v === 'looking-for-band' ? 'looking-for-musician'
+    : v === 'looking-for-musician' ? 'looking-for-band'
+      : v === 'concert-opportunity' ? 'concert-opportunity'
+        : '';
+
+const mapQueryToUIType = (v) =>
+  v === 'looking-for-musician' ? 'looking-for-band'
+    : v === 'looking-for-band' ? 'looking-for-musician'
+      : v === 'concert-opportunity' ? 'concert-opportunity'
+        : '';
 
 function VirtualMenuList(props) {
   const items = Children.toArray(props.children);
   const parentRef = useRef(null);
-
-  const v = useVirtualizer({
-    count: items.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 36,
-    overscan: 6,
-  });
+  const v = useVirtualizer({ count: items.length, getScrollElement: () => parentRef.current, estimateSize: () => 36, overscan: 6 });
 
   return (
-    <components.MenuList
-      {...props}
-      innerRef={parentRef}
-      style={{ maxHeight: 300, overflow: 'auto' }}
-    >
+    <components.MenuList {...props} innerRef={parentRef} style={{ maxHeight: 300, overflow: 'auto' }}>
       <div style={{ height: v.getTotalSize(), position: 'relative' }}>
         {v.getVirtualItems().map(row => (
-          <div
-            key={row.key}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              transform: `translateY(${row.start}px)`,
-            }}
-          >
+          <div key={row.key} style={{ position: 'absolute', top: 0, left: 0, right: 0, transform: `translateY(${row.start}px)` }}>
             {items[row.index]}
           </div>
         ))}
@@ -57,14 +47,8 @@ export default function TagFilter() {
   const [cities, setCities] = useState([]);
   const [type, setType] = useState('');
 
-  const cityOptions = useMemo(
-    () => settlements.map(o => ({ ...o, lc: o.label.toLowerCase() })),
-    []
-  );
-  const filterCity = (option, raw) => {
-    if (!raw) return true;
-    return option.data.lc.includes(raw.toLowerCase());
-  };
+  const cityOptions = useMemo(() => settlements.map(o => ({ ...o, lc: o.label.toLowerCase() })), []);
+  const filterCity = (option, raw) => !raw || option.data.lc.includes(raw.toLowerCase());
 
   useEffect(() => {
     const parseCsv = (s) => (s ? s.split(',').map(v => v.trim()).filter(Boolean) : []);
@@ -72,33 +56,19 @@ export default function TagFilter() {
     const cityVals = parseCsv(sp.get('city') || '');
     const typeVal = sp.get('type') || '';
 
-    const instOpts = instrumentOptions.filter(o => instVals.includes(o.value));
-    const cityOpts = cityOptions.filter(o => cityVals.includes(o.value));
-
-    setInstruments(instOpts);
-    setCities(cityOpts);
-    setType(typeVal);
+    setInstruments(instrumentOptions.filter(o => instVals.includes(o.value)));
+    setCities(cityOptions.filter(o => cityVals.includes(o.value)));
+    setType(mapQueryToUIType(typeVal));
   }, [sp, cityOptions]);
 
   const onSubmit = (e) => {
     e.preventDefault();
     const params = new URLSearchParams();
 
-    if (instruments.length) {
-      params.set(
-        'instrument',
-        instruments.map(i => i.value).join(',')
-      );
-    }
-    if (cities.length) {
-      params.set(
-        'city',
-        cities.map(c => c.value).join(',')
-      );
-    }
-    if (type) {
-      params.set('type', type);
-    }
+    if (instruments.length) params.set('instrument', instruments.map(i => i.value).join(','));
+    if (cities.length) params.set('city', cities.map(c => c.value).join(','));
+    const qType = mapUIToQueryType(type);
+    if (qType) params.set('type', qType);
 
     const qs = params.toString();
     startTransition(() => {
@@ -143,7 +113,7 @@ export default function TagFilter() {
         <label>Típus</label>
         <Select
           options={typeOptions}
-          value={typeOptions.find(t => t.value === type)}
+          value={typeOptions.find(t => t.value === type) || null}
           onChange={opt => setType(opt?.value || '')}
           className="mt-1"
           classNamePrefix="react-select"
