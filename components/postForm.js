@@ -59,7 +59,6 @@ export default function PostForm({ mode, postRef, defaultValues }) {
                 instrumentTags: data.postType === 'concert-opportunity' ? [] : data.instrumentTags,
                 cityTags: data.cityTags,
                 postType: data.postType,
-                published: true,
                 updatedAt: serverTimestamp(),
             });
             reset(data);
@@ -96,7 +95,6 @@ export default function PostForm({ mode, postRef, defaultValues }) {
             instrumentTags: data.postType === 'concert-opportunity' ? [] : data.instrumentTags,
             cityTags: data.cityTags,
             postType: data.postType,
-            published: true,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
         });

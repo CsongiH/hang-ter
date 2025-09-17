@@ -8,18 +8,11 @@ import { instrumentOptions } from './tags/instruments';
 import { settlements } from './tags/settlements';
 import { typeOptions } from './tags/types';
 
+//már nem itt van a logika, ezért V=V
 
-const mapUIToQueryType = (v) =>
-  v === 'looking-for-band' ? 'looking-for-musician'
-    : v === 'looking-for-musician' ? 'looking-for-band'
-      : v === 'concert-opportunity' ? 'concert-opportunity'
-        : '';
+const mapUIToQueryType = (v) => v;
 
-const mapQueryToUIType = (v) =>
-  v === 'looking-for-musician' ? 'looking-for-band'
-    : v === 'looking-for-band' ? 'looking-for-musician'
-      : v === 'concert-opportunity' ? 'concert-opportunity'
-        : '';
+const mapQueryToUIType = (v) => v;
 
 function VirtualMenuList(props) {
   const items = Children.toArray(props.children);
