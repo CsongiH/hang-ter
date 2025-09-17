@@ -12,12 +12,7 @@ import { firestore, auth, serverTimestamp } from '../lib/firebase';
 import { UserContext } from '../lib/AuthContext';
 import { instrumentOptions } from './tags/instruments';
 import { settlements as cityOptions } from './tags/settlements';
-
-const typeOptions = [
-    { value: 'looking-for-band', label: 'Looking for a band' },
-    { value: 'looking-for-musician', label: 'Looking for a musician' },
-    { value: 'concert-opportunity', label: 'Concert opportunity' },
-];
+import { typeOptions } from './tags/types';
 
 function randomId(len = 6) {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
