@@ -24,6 +24,7 @@ const paths = [
         }
 
     }
+    await new Promise(r => setTimeout(r, 100));
     console.log('\x1b[32m%s\x1b[0m', '_____________Compiling done_____________');
     console.log('\x1b[32m%s\x1b[0m', '_____________Compiling done_____________');
     console.log('\x1b[32m%s\x1b[0m', '_____________Compiling done_____________');
