@@ -2,11 +2,11 @@
 import { notFound } from 'next/navigation';
 import { getUserWithUsername, jsonConvert } from "../../../lib/firebase";
 import Profile from "../../../components/profile";
-import Feed from "../../../components/feed";
 import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { firestore } from "../../../lib/firebase";
 import { LogOutButton } from "../../../components/logInButtons";
 import Link from "next/link";
+import CardLoader from '../../../components/cardLoader';
 
 export default async function UserPage(props) {
     const { user: username } = await props.params;
@@ -34,7 +34,7 @@ export default async function UserPage(props) {
                 <button>Profil szerkesztése</button>
             </Link>
             <LogOutButton />
-            <Feed posts={posts} />
+            <CardLoader initialPosts={posts} onlyMine={true} />
         </main>
     );
 }

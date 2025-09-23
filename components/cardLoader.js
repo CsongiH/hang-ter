@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import Feed from "./feed";
 import { firestore } from "../lib/firebase";
 import {
@@ -15,10 +15,12 @@ import {
     documentId
 } from "firebase/firestore";
 import { jsonConvert } from "../lib/firebase";
+import { UserContext } from "../lib/AuthContext";
 
-const nrOfPosts = 5;
+const PAGE = 5;
 
-export default function CardLoader({ initialPosts }) {
+export default function CardLoader({ initialPosts, onlyMine = false }) {
+    const { user } = useContext(UserContext);
     const [posts, setPosts] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isEnd, setIsEnd] = useState(false);
@@ -30,12 +32,14 @@ export default function CardLoader({ initialPosts }) {
         const need = uids.filter(u => !banCache.current.has(u));
         for (let i = 0; i < need.length; i += 10) {
             const batch = need.slice(i, i + 10);
+            if (!batch.length) continue;
             const snap = await getDocs(
                 query(collection(firestore, "users"), where(documentId(), "in", batch))
             );
             snap.forEach(d => {
                 banCache.current.set(d.id, d.data()?.isBanned === true);
             });
+            batch.forEach(id => { if (!banCache.current.has(id)) banCache.current.set(id, false); });
         }
         const banned = new Set();
         uids.forEach(u => { if (banCache.current.get(u) === true) banned.add(u); });
@@ -43,54 +47,88 @@ export default function CardLoader({ initialPosts }) {
     };
 
     const filterList = async (list) => {
-        const notRemoved = list.filter(p => p?.isRemoved !== true);
-        const uids = Array.from(new Set(notRemoved.map(getAuthorId).filter(Boolean)));
+        const scoped = onlyMine && user?.uid ? list.filter(p => getAuthorId(p) === user.uid) : list;
+        const visible = scoped.filter(p => p?.isRemoved !== true);
+        const uids = Array.from(new Set(visible.map(getAuthorId).filter(Boolean)));
         const banned = await fetchBannedSet(uids);
-        return notRemoved.filter(p => !banned.has(getAuthorId(p)));
+        return visible.filter(p => !banned.has(getAuthorId(p)));
     };
 
     useEffect(() => {
         (async () => {
-            const filtered = await filterList(initialPosts || []);
-            setPosts(filtered);
-            setIsEnd(filtered.length < nrOfPosts);
+            const primed = await filterList(initialPosts || []);
+            setPosts(primed);
+            setIsEnd(primed.length < PAGE);
         })();
     }, [initialPosts]);
 
-    const loadNextPosts = async () => {
+    useEffect(() => {
+        let active = true;
+        (async () => {
+            if (onlyMine && !user?.uid) return;
+            setIsLoading(true);
+            const q = onlyMine && user?.uid
+                ? query(
+                    collectionGroup(firestore, "posts"),
+                    where("uid", "==", user.uid),
+                    orderBy("createdAt", "desc"),
+                    limit(PAGE)
+                )
+                : query(
+                    collectionGroup(firestore, "posts"),
+                    orderBy("createdAt", "desc"),
+                    limit(PAGE)
+                );
+            const snap = await getDocs(q);
+            const freshRaw = snap.docs.map(jsonConvert);
+            const fresh = await filterList(freshRaw);
+            if (!active) return;
+            setPosts(fresh);
+            setIsEnd(fresh.length < PAGE);
+            setIsLoading(false);
+        })();
+        return () => { active = false; };
+    }, [onlyMine, user?.uid]);
+
+    const loadNext = async () => {
+        if (onlyMine && !user?.uid) return;
+        if (!posts.length) return;
+
         setIsLoading(true);
 
-        const lastPost = posts[posts.length - 1];
-        const lastTimestamp =
-            typeof lastPost.createdAt === "number"
-                ? new Date(lastPost.createdAt)
-                : lastPost.createdAt;
+        const last = posts[posts.length - 1];
+        const lastTs = typeof last?.createdAt === "number"
+            ? new Date(last.createdAt)
+            : last?.createdAt;
 
-        const postsQuery = query(
-            collectionGroup(firestore, "posts"),
-            where("published", "==", true),
-            where("isRemoved", "==", false),
-            orderBy("createdAt", "desc"),
-            startAfter(lastTimestamp),
-            limit(nrOfPosts)
-        );
+        const base = onlyMine && user?.uid
+            ? [
+                collectionGroup(firestore, "posts"),
+                where("uid", "==", user.uid),
+                orderBy("createdAt", "desc"),
+            ]
+            : [
+                collectionGroup(firestore, "posts"),
+                orderBy("createdAt", "desc"),
+            ];
 
-        const querySnapshot = await getDocs(postsQuery);
-        const newRaw = querySnapshot.docs.map(jsonConvert);
-        const newFiltered = await filterList(newRaw);
+        const q = lastTs
+            ? query(...base, startAfter(lastTs), limit(PAGE))
+            : query(...base, limit(PAGE));
 
-        setPosts(prev => prev.concat(newFiltered));
+        const snap = await getDocs(q);
+        const raw = snap.docs.map(jsonConvert);
+        const more = await filterList(raw);
+
+        setPosts(prev => prev.concat(more));
         setIsLoading(false);
-
-        if (newFiltered.length < nrOfPosts) {
-            setIsEnd(true);
-        }
+        if (more.length < PAGE) setIsEnd(true);
     };
 
     return (
         <>
-            <Feed posts={posts} />
-            {!isLoading && !isEnd && <button onClick={loadNextPosts}>Több</button>}
+            <Feed posts={posts} onlyMine={onlyMine} />
+            {!isLoading && !isEnd && <button onClick={loadNext}>Több</button>}
             {isEnd && "Nincs több megjeleníthető poszt"}
         </>
     );
