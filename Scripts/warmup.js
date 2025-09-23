@@ -10,6 +10,8 @@ const paths = [
     '/aboutMe',
     '/editprofile',
     '/logmein',
+    '/admin/users/hcsongi',
+    '/admin/posts/hcsongi/warmup',
 ];
 (async () => {
     for (const p of paths) {
