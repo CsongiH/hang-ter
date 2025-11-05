@@ -1,8 +1,8 @@
 'use client';
 
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { UserContext } from '../../../lib/AuthContext';
+import { useUserContext } from '../../../lib/AuthContext';
 import {
     collection,
     collectionGroup,
@@ -14,9 +14,14 @@ import {
 } from 'firebase/firestore';
 import { firestore } from '../../../lib/firebase';
 
+
+const mapDocs = (snap) => snap.docs.map((d) => ({ id: d.id, ref: d.ref, ...d.data() }));
+const lc = (s) => String(s || '').toLowerCase();
+const matches = (q, arr) => arr.some((x) => x && x.includes(q));
+
 export default function AdminPage() {
     const router = useRouter();
-    const { user, isAdmin } = useContext(UserContext);
+    const { user, isAdmin } = useUserContext();
 
     const [users, setUsers] = useState([]);
     const [posts, setPosts] = useState([]);
@@ -27,34 +32,13 @@ export default function AdminPage() {
     const [onlyRemoved, setOnlyRemoved] = useState(false);
 
     useEffect(() => {
-        if (user === undefined) return;
         if (!user || !isAdmin) router.replace('/404');
     }, [user, isAdmin, router]);
 
     useEffect(() => {
         if (!user || !isAdmin) return;
-        const unsubUsers = onSnapshot(
-            query(collection(firestore, 'users'), limit(500)),
-            snap =>
-                setUsers(
-                    snap.docs.map(d => ({
-                        id: d.id,
-                        ref: d.ref,
-                        ...d.data(),
-                    })),
-                ),
-        );
-        const unsubPosts = onSnapshot(
-            query(collectionGroup(firestore, 'posts'), limit(500)),
-            snap =>
-                setPosts(
-                    snap.docs.map(d => ({
-                        id: d.id,
-                        ref: d.ref,
-                        ...d.data(),
-                    })),
-                ),
-        );
+        const unsubUsers = onSnapshot(query(collection(firestore, 'users'), limit(500)), (snap) => setUsers(mapDocs(snap)));
+        const unsubPosts = onSnapshot(query(collectionGroup(firestore, 'posts'), limit(500)), (snap) => setPosts(mapDocs(snap)));
         return () => {
             unsubUsers?.();
             unsubPosts?.();
@@ -62,153 +46,189 @@ export default function AdminPage() {
     }, [user, isAdmin]);
 
     const filteredUsers = useMemo(() => {
-        const q = userSearch.trim().toLowerCase();
-        return users.filter(u => {
+        const q = lc(userSearch.trim());
+        return users.filter((u) => {
             if (onlyBanned && !u.isBanned) return false;
             if (!q) return true;
-            const a = [
-                u.username?.toLowerCase(),
-                u.displayName?.toLowerCase(),
-                u.email?.toLowerCase(),
-                u.id?.toLowerCase(),
-            ].filter(Boolean);
-            return a.some(x => x.includes(q));
+            return matches(q, [lc(u.username), lc(u.displayName), lc(u.email), lc(u.id)]);
         });
     }, [users, userSearch, onlyBanned]);
 
     const filteredPosts = useMemo(() => {
-        const q = postSearch.trim().toLowerCase();
-        return posts.filter(p => {
+        const q = lc(postSearch.trim());
+        return posts.filter((p) => {
             if (onlyRemoved && !p.isRemoved) return false;
             if (!q) return true;
-            const a = [
-                p.title?.toLowerCase(),
-                p.slug?.toLowerCase(),
-                p.username?.toLowerCase(),
-                Array.isArray(p.instrumentTags) ? p.instrumentTags.join(',').toLowerCase() : '',
-                Array.isArray(p.cityTags) ? p.cityTags.join(',').toLowerCase() : '',
-            ];
-            return a.some(x => x && x.includes(q));
+            const cities = Array.isArray(p.cityTags) ? p.cityTags.join(',').toLowerCase() : '';
+            const instruments = Array.isArray(p.instrumentTags) ? p.instrumentTags.join(',').toLowerCase() : '';
+            return matches(q, [lc(p.title), lc(p.slug), lc(p.username), cities, instruments]);
         });
     }, [posts, postSearch, onlyRemoved]);
 
-    const toggleUserBan = async u => {
+    const toggleUserBan = async (u) => {
         try {
             await updateDoc(doc(firestore, 'users', u.id), { isBanned: !u.isBanned });
         } catch { }
     };
 
-    const togglePostRemoved = async p => {
+    const togglePostRemoved = async (p) => {
         try {
             await updateDoc(p.ref, { isRemoved: !p.isRemoved });
         } catch { }
     };
 
-    const openUser = u => router.push(`/admin/users/${u.id}`);
-    const openPost = (p) => router.push(`/admin/posts/${p.ref.path}`);
-
-
     if (!user || !isAdmin) return null;
 
-    return (
-        <main className="p-4">
-            <h1 className="text-xl font-semibold mb-4">Admin</h1>
+    const panelHeight = 'calc(100vh - 140px)';
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <section className="border rounded-lg p-4">
-                    <div className="flex items-center gap-3 mb-3">
+    return (
+        <main className="layout">
+            <h1 className="h1">Admin</h1>
+
+            <div
+                className="grid"
+                style={{
+                    gap: 24,
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))',
+                    alignItems: 'stretch',
+                }}
+            >
+                <section className="card" style={{ height: panelHeight, display: 'flex', flexDirection: 'column' }}>
+                    <div className="row" style={{ alignItems: 'center', marginBottom: 8 }}>
                         <input
+                            className="input"
                             value={userSearch}
-                            onChange={e => setUserSearch(e.target.value)}
+                            onChange={(e) => setUserSearch(e.target.value)}
                             placeholder="Keresés felhasználók között…"
-                            className="input input-bordered w-full"
                         />
-                        <label className="flex items-center gap-2 text-sm">
+                        <label className="row" style={{ gap: 8 }}>
                             <input
                                 type="checkbox"
                                 checked={onlyBanned}
-                                onChange={e => setOnlyBanned(e.target.checked)}
+                                onChange={(e) => setOnlyBanned(e.target.checked)}
                             />
-                            Csak tiltottak
+                            <span className="small">Csak tiltottak</span>
                         </label>
                     </div>
 
-                    <div className="max-h-[70vh] overflow-auto divide-y">
-                        {filteredUsers.map(u => (
+                    <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+                        {filteredUsers.map((u) => (
                             <div
                                 key={u.id}
-                                className="flex items-center justify-between py-2 cursor-pointer hover:bg-gray-50"
+                                className="row"
+                                style={{
+                                    justifyContent: 'space-between',
+                                    padding: '10px 4px',
+                                    cursor: 'pointer',
+                                    borderBottom: '1px solid var(--bg-2)',
+                                }}
                             >
-                                <div onClick={() => openUser(u)} className="min-w-0 flex-1">
-                                    <div className="font-medium truncate">{u.username || '(nincs username)'}</div>
-                                    <div className="text-xs text-gray-500 truncate">{u.email || u.id}</div>
+                                <div
+                                    className="stack"
+                                    style={{ minWidth: 0 }}
+                                    onClick={() => {
+                                        const seg = u.username ? encodeURIComponent(String(u.username).toLowerCase()) : encodeURIComponent(u.id);
+                                        router.push(`/admin/${seg}`);
+                                    }}
+                                >
+                                    <div
+                                        className="small"
+                                        style={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                                    >
+                                        {u.username || '(nincs username)'}
+                                    </div>
+                                    <div
+                                        className="small muted"
+                                        style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                                    >
+                                        {u.email || u.id}
+                                    </div>
                                 </div>
-                                <label className="inline-flex items-center gap-2 pl-3">
-                                    <span className="text-sm">{u.isBanned ? 'Tiltva' : 'Aktív'}</span>
+                                <label className="row" style={{ gap: 8 }} onClick={(e) => e.stopPropagation()}>
+                                    <span className="small">{u.isBanned ? 'Tiltva' : 'Aktív'}</span>
                                     <input
                                         type="checkbox"
                                         checked={!!u.isBanned}
                                         onChange={() => toggleUserBan(u)}
-                                        onClick={e => e.stopPropagation()}
                                     />
                                 </label>
                             </div>
                         ))}
                         {!filteredUsers.length && (
-                            <div className="text-sm text-gray-500 py-6 text-center">Nincs találat</div>
+                            <div className="small muted" style={{ textAlign: 'center', padding: '16px 0' }}>
+                                Nincs találat
+                            </div>
                         )}
                     </div>
                 </section>
 
-                <section className="border rounded-lg p-4">
-                    <div className="flex items-center gap-3 mb-3">
+                <section className="card" style={{ height: panelHeight, display: 'flex', flexDirection: 'column' }}>
+                    <div className="row" style={{ alignItems: 'center', marginBottom: 8 }}>
                         <input
+                            className="input"
                             value={postSearch}
-                            onChange={e => setPostSearch(e.target.value)}
+                            onChange={(e) => setPostSearch(e.target.value)}
                             placeholder="Keresés posztok között…"
-                            className="input input-bordered w-full"
                         />
-                        <label className="flex items-center gap-2 text-sm">
+                        <label className="row" style={{ gap: 8 }}>
                             <input
                                 type="checkbox"
                                 checked={onlyRemoved}
-                                onChange={e => setOnlyRemoved(e.target.checked)}
+                                onChange={(e) => setOnlyRemoved(e.target.checked)}
                             />
-                            Csak eltávolítottak
+                            <span className="small">Csak eltávolítottak</span>
                         </label>
                     </div>
 
-                    <div className="max-h-[70vh] overflow-auto divide-y">
-                        {filteredPosts.map(p => (
+                    <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+                        {filteredPosts.map((p) => (
                             <div
                                 key={p.ref.path}
-                                className="flex items-center justify-between py-2 cursor-pointer hover:bg-gray-50"
-                                onClick={() => openPost(p)}
+                                className="row"
+                                style={{
+                                    justifyContent: 'space-between',
+                                    padding: '10px 4px',
+                                    cursor: 'pointer',
+                                    borderBottom: '1px solid var(--bg-2)',
+                                }}
+                                onClick={() => {
+                                    const userSeg =
+                                        p.username
+                                            ? encodeURIComponent(String(p.username).toLowerCase())
+                                            : encodeURIComponent(String(p.uid ?? p.ref.path.split('/')[1]));
+                                    const postSeg = encodeURIComponent(String(p.slug ?? p.id));
+                                    router.push(`/admin/${userSeg}/${postSeg}`);
+                                }}
                             >
-                                <div className="min-w-0">
-                                    <div className="font-medium truncate">{p.title || p.slug || '(cím nélkül)'}</div>
-                                    <div className="text-xs text-gray-500 truncate">
-                                        {(Array.isArray(p.cityTags) ? p.cityTags.join(', ') : '')}
-                                        {Array.isArray(p.instrumentTags) && p.instrumentTags.length
-                                            ? ` • ${p.instrumentTags.join(', ')}`
-                                            : ''}
+                                <div className="stack" style={{ minWidth: 0 }}>
+                                    <div
+                                        className="small"
+                                        style={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                                    >
+                                        {p.title || p.slug || '(cím nélkül)'}
+                                    </div>
+                                    <div
+                                        className="small muted"
+                                        style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                                    >
+                                        {Array.isArray(p.cityTags) ? p.cityTags.join(', ') : ''}
+                                        {Array.isArray(p.instrumentTags) && p.instrumentTags.length ? ` • ${p.instrumentTags.join(', ')}` : ''}
                                     </div>
                                 </div>
-                                <label className="inline-flex items-center gap-2">
-                                    <span className="text-sm">{p.isRemoved ? 'Eltávolítva' : 'Látható'}</span>
+                                <label className="row" style={{ gap: 8 }} onClick={(e) => e.stopPropagation()}>
+                                    <span className="small">{p.isRemoved ? 'Eltávolítva' : 'Látható'}</span>
                                     <input
                                         type="checkbox"
                                         checked={!!p.isRemoved}
-                                        onChange={e => {
-                                            e.stopPropagation();
-                                            togglePostRemoved(p);
-                                        }}
+                                        onChange={() => togglePostRemoved(p)}
                                     />
                                 </label>
                             </div>
                         ))}
                         {!filteredPosts.length && (
-                            <div className="text-sm text-gray-500 py-6 text-center">Nincs találat</div>
+                            <div className="small muted" style={{ textAlign: 'center', padding: '16px 0' }}>
+                                Nincs találat
+                            </div>
                         )}
                     </div>
                 </section>

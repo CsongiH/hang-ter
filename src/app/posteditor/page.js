@@ -5,10 +5,13 @@ import PostForm from '../../../components/postForm';
 
 export default function EditorPostsPage() {
     return (
-        <main className="p-4">
+        <main className="layout">
             <CheckAuthentication>
-                <PostForm mode="create" />
+                <section className="card max-w-[720px] mx-auto">
+                    <PostForm mode="create" />
+                </section>
             </CheckAuthentication>
         </main>
+
     );
 }

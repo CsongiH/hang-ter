@@ -1,11 +1,11 @@
-'use client';
-
 import LogInButtons from '../../../components/logInButtons';
 
 export default function Page() {
     return (
-        <div className="p-6">
-            <LogInButtons />
-        </div>
+        <main className="layout">
+            <section className="card max-w-[720px] mx-auto">
+                <LogInButtons />
+            </section>
+        </main>
     );
 }

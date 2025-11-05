@@ -8,21 +8,14 @@ export default function RootLayout({ children }) {
     return (
         <html lang="hu">
             <body>
+                <Toaster toastOptions={{ className: 'toast' }} />
                 <AuthProvider>
-                    <Navbar />
-                    {children}
-                    <Toaster toastOptions={{
-                        className: '',
-                        style: {
-                            padding: '16px',
-                            color: '#ffffff',
-                            backgroundColor: '#000000ff',
-                        },
-                    }
-                    }
-                    />
+                    <div className="page">
+                        <Navbar />
+                        {children}
+                        <Footer />
+                    </div>
                 </AuthProvider>
-                <Footer />
             </body>
         </html>
     );

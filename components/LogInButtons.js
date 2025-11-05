@@ -2,95 +2,113 @@
 
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useSignInWithGoogle } from 'react-firebase-hooks/auth';
 import { signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-
 import { auth, firestore } from '../lib/firebase';
-import { UserContext } from '../lib/AuthContext';
+import { useUserContext } from '../lib/AuthContext';
 
 const EditProfileForm = dynamic(() => import('./editProfileForm'), { ssr: false });
 
 export default function LogInButtons() {
-    const { user } = useContext(UserContext);
+    const router = useRouter();
+    const { user } = useUserContext();
     const [signInWithGoogle, , loading, error] = useSignInWithGoogle(auth);
     const [profile, setProfile] = useState(null);
     const [loadingProfile, setLoadingProfile] = useState(false);
 
-    const goToSlug = useCallback((u) => {
-        const slug = String(u || '').trim().toLowerCase();
-        window.location.assign(slug ? `/${encodeURIComponent(slug)}` : '/logmein');
-    }, []);
-
     useEffect(() => {
-        let mounted = true;
-        const load = async () => {
+        let isMounted = true;
+
+        const loadProfile = async () => {
             if (!user) {
-                setProfile(null);
+                if (isMounted) setProfile(null);
                 return;
             }
-            setLoadingProfile(true);
-            const snap = await getDoc(doc(firestore, 'users', user.uid));
-            const data = snap.exists() ? snap.data() : {};
-            if (mounted) setProfile(data);
-            setLoadingProfile(false);
+
+            if (isMounted) setLoadingProfile(true);
+
+            try {
+                const userDoc = await getDoc(doc(firestore, 'users', user.uid));
+                const userData = userDoc.exists() ? userDoc.data() : {};
+                if (isMounted) setProfile(userData);
+            } catch (error) {
+                if (isMounted) setProfile({});
+            } finally {
+                if (isMounted) setLoadingProfile(false);
+            }
         };
-        load();
-        return () => { mounted = false; };
+
+        loadProfile();
+
+        return () => {
+            isMounted = false;
+        };
     }, [user]);
 
     useEffect(() => {
-        if (user && profile?.username) goToSlug(profile.username);
-    }, [user, profile?.username, goToSlug]);
+        if (user && profile?.username) {
+            const normalizedUsername = String(profile.username).toLowerCase();
+            router.replace(`/${encodeURIComponent(normalizedUsername)}`);
+        }
+    }, [user, profile?.username, router]);
 
-    const handleGoogle = async () => {
+    const handleGoogleSignIn = async () => {
         await signInWithGoogle();
-        const u = auth.currentUser;
-        if (!u) return;
-        const snap = await getDoc(doc(firestore, 'users', u.uid));
-        const data = snap.exists() ? snap.data() : {};
-        goToSlug(data.username);
     };
 
     if (!user) {
-        if (loading) return <button disabled>Bejelentkezés folyamatban…</button>;
-        if (error) return <p>Hiba: {error.message}</p>;
+        if (loading) return <button className="button" disabled>Bejelentkezés folyamatban…</button>;
+        if (error) return <p className="small muted">Hiba: {error.message}</p>;
+
         return (
-            <button className="btn" onClick={handleGoogle}>
-                <Image src="/google-logo.svg" width={30} height={30} alt="Google logo" />
-                Bejelentkezés Google fiókkal
-            </button>
+            <div className="stack items-center text-center">
+                <h1 className="h1">Bejelentkezés</h1>
+                <button className="button" onClick={handleGoogleSignIn}>
+                    <Image src="/google-logo.svg" width={20} height={20} alt="Google logo" />
+                    Bejelentkezés Google fiókkal
+                </button>
+            </div>
         );
     }
 
-    if (loadingProfile) return <div>Betöltés…</div>;
+    if (loadingProfile) return <div className="small muted">Betöltés…</div>;
 
     if (!profile?.username) {
         return (
-            <div className="space-y-4">
-                <EditProfileForm initialProfile={profile} />
-                <LogOutButton />
+            <div className="stack">
+                <h1 className="h1">Profil beállítása</h1>
+                <EditProfileForm initialProfile={profile} embedded />
+                <div className="row justify-end">
+                    <LogOutButton />
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="space-x-2">
-            <span>Be vagy jelentkezve.</span>
+        <div className="row justify-center gap-3">
+            <span className="small">Be vagy jelentkezve.</span>
             <LogOutButton />
         </div>
     );
 }
 
 export function LogOutButton() {
+    const router = useRouter();
+
+    const handleSignOut = async () => {
+        try {
+            await signOut(auth);
+        } finally {
+            router.replace('/logmein');
+        }
+    };
+
     return (
-        <button
-            onClick={async () => {
-                try { await signOut(auth); } finally { window.location.assign('/logmein'); }
-            }}
-            className="rounded-2xl px-3 py-2 border"
-        >
+        <button className="button" onClick={handleSignOut}>
             Kijelentkezés
         </button>
     );

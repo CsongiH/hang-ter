@@ -1,23 +1,24 @@
 'use client';
 
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import debounce from 'lodash.debounce';
 import { toast } from 'react-hot-toast';
-import { UserContext } from '../lib/AuthContext';
+import { useUserContext } from '../lib/AuthContext';
 import { firestore } from '../lib/firebase';
 import { doc, getDoc, setDoc, runTransaction, serverTimestamp } from 'firebase/firestore';
+import { useRouter } from 'next/navigation';
 
-export default function EditProfileForm({ hideUsernameSetting = false, initialProfile = null, onSaved }) {
-    const { user } = useContext(UserContext);
+export default function EditProfileForm({ embedded = false, hideUsernameSetting = false, initialProfile = null, onSaved }) {
+    const { user } = useUserContext();
     const [profile, setProfile] = useState(initialProfile);
-
+    const router = useRouter();
     const {
         register,
         handleSubmit,
         reset,
         watch,
-        formState: { isDirty, isValid, errors }
+        formState: { isValid, errors },
     } = useForm({
         mode: 'onChange',
         defaultValues: {
@@ -28,17 +29,20 @@ export default function EditProfileForm({ hideUsernameSetting = false, initialPr
             instagram: '',
             facebook: '',
             email: '',
-            phone: ''
-        }
+            phone: '',
+        },
     });
 
-    const username = watch('username')?.toLowerCase() ?? '';
-    const needsUsername = useMemo(() => !hideUsernameSetting && !profile?.username, [hideUsernameSetting, profile]);
+    const username = (watch('username') || '').toLowerCase();
+    const needsUsername = !hideUsernameSetting && !profile?.username;
 
-    const usernameFormatOk = useMemo(() => {
-        if (!needsUsername) return true;
-        return /^(?=[a-z0-9._]{3,15}$)(?!.*[_.]{2})[^_.].*[^_.]$/.test(username);
-    }, [needsUsername, username]);
+    const isValidUsername = (v) => {
+        const s = (v || '').toLowerCase();
+        if (s.length < 3 || s.length > 15) return false;
+        return /^[a-z0-9_]+$/.test(s);
+    };
+
+    const usernameFormatOk = !needsUsername || isValidUsername(username);
 
     const [unameLoading, setUnameLoading] = useState(false);
     const [unameAvailable, setUnameAvailable] = useState(false);
@@ -63,7 +67,7 @@ export default function EditProfileForm({ hideUsernameSetting = false, initialPr
                 instagram: bio.instagram || '',
                 facebook: bio.facebook || '',
                 email: bio.email || '',
-                phone: bio.phone || ''
+                phone: bio.phone || '',
             });
         };
         load();
@@ -73,7 +77,7 @@ export default function EditProfileForm({ hideUsernameSetting = false, initialPr
         () =>
             debounce(async (u) => {
                 if (!needsUsername) return;
-                if (!u || u.length < 3 || !usernameFormatOk) {
+                if (!isValidUsername(u)) {
                     setUnameLoading(false);
                     setUnameAvailable(false);
                     return;
@@ -83,7 +87,7 @@ export default function EditProfileForm({ hideUsernameSetting = false, initialPr
                 setUnameAvailable(!snap.exists());
                 setUnameLoading(false);
             }, 500),
-        [needsUsername, usernameFormatOk]
+        [needsUsername]
     );
 
     useEffect(() => {
@@ -99,239 +103,255 @@ export default function EditProfileForm({ hideUsernameSetting = false, initialPr
         return () => debouncedCheck.cancel();
     }, [username, needsUsername, debouncedCheck]);
 
+    const normalizeSocial = (v, type) => {
+        if (!v) return '';
+
+        const isIg = type === 'ig';
+        const domains = isIg ? ['instagram.com', 'instagr.am'] : ['facebook.com', 'fb.com'];
+        const baseUrl = isIg ? 'https://instagram.com/' : 'https://facebook.com/';
+
+        let s = String(v).trim();
+
+        if (s.startsWith('@')) {
+            const handle = s.slice(1);
+            if (!handle) return '';
+            s = baseUrl + handle;
+        } else if (!/^https?:\/\//i.test(s)) {
+            s = 'https://' + s;
+        }
+
+        try {
+            const url = new URL(s);
+            return domains.some(d => url.hostname.toLowerCase().endsWith(d)) ? url.toString() : '';
+        } catch {
+            return '';
+        }
+    };
+
     const onSubmit = async ({ about, age, role, username, instagram, facebook, email, phone }) => {
         if (!user) return;
-
         const ref = doc(firestore, 'users', user.uid);
-        const normalizedAge =
-            age === '' || age === null || typeof age === 'undefined' ? null : Number(age);
 
+        const nAge = age === '' || age == null ? null : Number(age);
         const bio = {
             about: (about || '').trim(),
-            age: Number.isFinite(normalizedAge) ? normalizedAge : null,
+            age: Number.isFinite(nAge) ? nAge : null,
             role: role || '',
-            instagram: (instagram || '').trim(),
-            facebook: (facebook || '').trim(),
+            instagram: normalizeSocial(instagram, 'ig'),
+            facebook: normalizeSocial(facebook, 'fb'),
             email: (email || '').trim(),
-            phone: (phone || '').trim()
+            phone: (phone || '').trim(),
         };
 
         try {
             if (needsUsername) {
                 const uname = (username || '').trim().toLowerCase();
-                if (!/^(?=[a-z0-9._]{3,15}$)(?!.*[_.]{2})[^_.].*[^_.]$/.test(uname)) {
-                    throw new Error('Érvénytelen felhasználónév.');
-                }
+                if (!isValidUsername(uname)) throw new Error('Érvénytelen felhasználónév.');
                 const unameRef = doc(firestore, 'usernames', uname);
                 await runTransaction(firestore, async (tx) => {
                     const unameSnap = await tx.get(unameRef);
                     if (unameSnap.exists()) throw new Error('A felhasználónév foglalt.');
+                    const userSnap = await tx.get(ref);
+                    const existing = userSnap.exists() ? userSnap.data() : {};
+                    const payload = {
+                        bio,
+                        username: uname,
+                        updatedAt: serverTimestamp(),
+                        ...(userSnap.exists() ? {} : { createdAt: serverTimestamp() }),
+                        ...(existing?.photoURL == null ? { photoURL: user.photoURL ?? null } : {}),
+                        ...(existing?.displayName == null ? { displayName: user.displayName ?? null } : {}),
+                        isAdmin: false,
+                    };
                     tx.set(unameRef, { uid: user.uid, createdAt: serverTimestamp() });
-                    tx.set(
-                        ref,
-                        {
-                            bio,
-                            username: uname,
-                            updatedAt: serverTimestamp(),
-                            createdAt: serverTimestamp(),
-                            photoURL: user.photoURL,
-                            displayName: user.displayName,
-                            isAdmin: false
-                        },
-                        { merge: true }
-                    );
+                    tx.set(ref, payload, { merge: true });
                 });
             } else {
                 await setDoc(ref, { bio, updatedAt: serverTimestamp() }, { merge: true });
             }
 
             toast.success('Profil frissítve');
-            if (onSaved) onSaved();
-
+            onSaved?.();
             const fresh = await getDoc(ref);
             setProfile(fresh.exists() ? fresh.data() : {});
         } catch (err) {
             toast.error(err?.message || 'Mentési hiba');
         }
+        router.push('/');
     };
 
     if (!user) return null;
 
     const submitDisabled =
-        (!isDirty && !isValid) ||
-        (needsUsername && (!usernameFormatOk || !unameAvailable || unameLoading));
+        !isValid || (needsUsername && (!usernameFormatOk || !unameAvailable || unameLoading));
 
-    return (
-        <main className="p-4 max-w-xl">
-            <h1 className="text-2xl font-bold mb-4">Profil szerkesztése</h1>
-
-            <form
-                onSubmit={handleSubmit(onSubmit)}
-                className="space-y-4"
-            >
-                {needsUsername && (
-                    <div>
-                        <label className="block mb-1">Felhasználónév</label>
-                        <input
-                            type="text"
-                            className="w-full p-2 border rounded"
-                            placeholder="pl. csongi_hu"
-                            {...register('username', {
-                                setValueAs: (v) => (v ?? '').toLowerCase(),
-                                validate: (v) =>
-                                    /^(?=[a-z0-9._]{3,15}$)(?!.*[_.]{2})[^_.].*[^_.]$/.test((v ?? '').toLowerCase()) ||
-                                    '3–15, a–z, 0–9, . _; nincs dupla . vagy _; nem kezdődik/végződik . vagy _'
-                            })}
-                        />
-                        <div className="text-sm mt-1">
-                            {!username && <p className="opacity-70">3–15 karakter, a–z, 0–9, . _</p>}
-                            {errors.username && <p className="text-red-500">{errors.username.message}</p>}
-                            {!errors.username && username && unameLoading && <p>Ellenőrzés…</p>}
-                            {!errors.username && username && !unameLoading && unameAvailable && (
-                                <p className="text-green-600">{username} elérhető!</p>
-                            )}
-                            {!errors.username && username && !unameLoading && !unameAvailable && (
-                                <p className="text-red-600">Ez a felhasználónév már használt</p>
-                            )}
-                        </div>
+    const FormBlock = (
+        <form onSubmit={handleSubmit(onSubmit)} className="stack">
+            {needsUsername && (
+                <div className="field">
+                    <label className="label">Felhasználónév</label>
+                    <input
+                        type="text"
+                        className="input"
+                        placeholder="pl. nagy_fero"
+                        {...register('username', {
+                            setValueAs: (v) => (v ?? '').toLowerCase(),
+                            validate: (v) => isValidUsername(v),
+                        })}
+                    />
+                    <div className="small">
+                        {!username && !unameLoading &&
+                            <span className="muted italic">3-15 karakter, a-z, 0-9 vagy _</span>
+                        }
+                        {username && !usernameFormatOk && !unameLoading &&
+                            <span className="error-message">3-15 karakter, a-z, 0-9 vagy _</span>
+                        }
+                        {username && unameLoading &&
+                            <span className="muted italic" >Ellenőrzés…</span>
+                        }
+                        {username && !unameLoading && unameAvailable &&
+                            <span className="ok-message">{username} elérhető!</span>
+                        }
+                        {username && !unameLoading && !unameAvailable && usernameFormatOk &&
+                            <span className="error-message">{username} már használt</span>
+                        }
                     </div>
-                )}
-
-                <div>
-                    <label className="block mb-1">Bemutatkozás</label>
-                    <textarea
-                        className="w-full min-h-[140px] p-2 border rounded"
-                        placeholder="Rövid leírás magamról..."
-                        {...register('about', {
-                            maxLength: { value: 5000, message: 'Túl hosszú szöveg (max 5000).' }
-                        })}
-                    />
-                    {errors.about && <p className="text-red-500 text-sm">{errors.about.message}</p>}
                 </div>
+            )}
 
-                <div>
-                    <label className="block mb-1">Életkor (opcionális)</label>
-                    <input
-                        type="number"
-                        inputMode="numeric"
-                        className="w-full p-2 border rounded"
-                        placeholder="pl. 27"
-                        {...register('age', {
-                            validate: (v) => {
-                                if (v === '' || v === null || typeof v === 'undefined') return true;
-                                const n = Number(v);
-                                if (!Number.isFinite(n)) return 'Számot adj meg.';
-                                if (!Number.isInteger(n)) return 'Egész számot adj meg.';
-                                if (n < 0 || n > 120) return '0–120 között add meg.';
-                                return true;
+            <div className="field">
+                <label className="label">Bemutatkozás</label>
+                <textarea
+                    className="textarea"
+                    placeholder="Rövid leírás magamról..."
+                    {...register('about', { maxLength: { value: 5000, message: 'Túl hosszú szöveg (max 5000).' } })}
+                />
+                {errors.about && <p className="error-message">{errors.about.message}</p>}
+            </div>
+
+            <div className="field">
+                <label className="label">Életkor (opcionális)</label>
+                <input
+                    type="number"
+                    inputMode="numeric"
+                    className="input"
+                    placeholder="pl. 27"
+                    {...register('age', {
+                        validate: (v) => {
+                            if (v === '' || v == null) return true;
+                            const n = Number(v);
+                            if (!Number.isFinite(n)) return 'Számot adj meg.';
+                            if (!Number.isInteger(n)) return 'Egész számot adj meg.';
+                            if (n < 0 || n > 120) return '0-120 között add meg.';
+                            return true;
+                        },
+                    })}
+                />
+                {errors.age && <p className="error-message">{errors.age.message}</p>}
+            </div>
+
+            <div className="field">
+                <label className="label">Szerep</label>
+                <select className="select" {...register('role')}>
+                    <option value="">— Válassz —</option>
+                    <option value="musician">Zenész</option>
+                    <option value="band">Zenekar</option>
+                    <option value="venue">Rendezvényhelyszín</option>
+                </select>
+            </div>
+
+            <div className="field">
+                <label className="label">Instagram</label>
+                <input
+                    type="url"
+                    className="input"
+                    placeholder="https://www.instagram.com/felhasznalo vagy @felhasznalo"
+                    {...register('instagram', {
+                        validate: (v) => {
+                            if (!v) return true;
+                            if (String(v).trim().startsWith('@')) return true;
+                            try {
+                                const s = /^https?:\/\//i.test(v) ? v : `https://${v}`;
+                                const h = new URL(s).hostname.toLowerCase();
+                                return h.endsWith('instagram.com') || h.endsWith('instagr.am') || 'Adj meg érvényes Instagram linket.';
+                            } catch {
+                                return 'Adj meg érvényes Instagram linket.';
                             }
-                        })}
-                    />
-                    {errors.age && <p className="text-red-500 text-sm">{errors.age.message}</p>}
-                </div>
+                        },
+                    })}
+                />
+                {errors.instagram && <p className="error-message">{errors.instagram.message}</p>}
+            </div>
 
-                <div>
-                    <label className="block mb-1">Szerep</label>
-                    <select className="w-full p-2 border rounded bg-white" {...register('role')}>
-                        <option value="">— Válassz —</option>
-                        <option value="musician">Zenész</option>
-                        <option value="band">Zenekar</option>
-                        <option value="venue">Rendezvényhelyszín</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label className="block mb-1">Instagram</label>
-                    <input
-                        type="url"
-                        className="w-full p-2 border rounded"
-                        placeholder="https://www.instagram.com/felhasznalo"
-                        {...register('instagram', {
-                            validate: (v) => {
-                                if (!v) return true;
-                                try {
-                                    const u = new URL(v);
-                                    const h = u.hostname.toLowerCase();
-                                    const ok =
-                                        h === 'instagram.com' ||
-                                        h.endsWith('.instagram.com') ||
-                                        h === 'instagr.am' ||
-                                        h.endsWith('.instagr.am');
-                                    return ok || 'Adj meg érvényes Instagram linket.';
-                                } catch {
-                                    return 'Adj meg érvényes Instagram linket.';
-                                }
+            <div className="field">
+                <label className="label">Facebook</label>
+                <input
+                    type="url"
+                    className="input"
+                    placeholder="https://www.facebook.com/felhasznalo vagy @felhasznalo"
+                    {...register('facebook', {
+                        validate: (v) => {
+                            if (!v) return true;
+                            if (String(v).trim().startsWith('@')) return true;
+                            try {
+                                const s = /^https?:\/\//i.test(v) ? v : `https://${v}`;
+                                const h = new URL(s).hostname.toLowerCase();
+                                return h.endsWith('facebook.com') || h.endsWith('fb.com') || 'Adj meg érvényes Facebook linket.';
+                            } catch {
+                                return 'Adj meg érvényes Facebook linket.';
                             }
-                        })}
-                    />
-                    {errors.instagram && <p className="text-red-500 text-sm">{errors.instagram.message}</p>}
-                </div>
+                        },
+                    })}
+                />
+                {errors.facebook && <p className="error-message">{errors.facebook.message}</p>}
+            </div>
 
-                <div>
-                    <label className="block mb-1">Facebook</label>
-                    <input
-                        type="url"
-                        className="w-full p-2 border rounded"
-                        placeholder="https://www.facebook.com/felhasznalo"
-                        {...register('facebook', {
-                            validate: (v) => {
-                                if (!v) return true;
-                                try {
-                                    const u = new URL(v);
-                                    const h = u.hostname.toLowerCase();
-                                    const ok = h.endsWith('facebook.com') || h.endsWith('fb.com');
-                                    return ok || 'Adj meg érvényes Facebook linket.';
-                                } catch {
-                                    return 'Adj meg érvényes Facebook linket.';
-                                }
-                            }
-                        })}
-                    />
-                    {errors.facebook && <p className="text-red-500 text-sm">{errors.facebook.message}</p>}
-                </div>
+            <div className="field">
+                <label className="label">E-mail</label>
+                <input
+                    type="email"
+                    className="input"
+                    placeholder="nev@example.com"
+                    {...register('email', {
+                        validate: (v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/i.test(v) || 'Adj meg érvényes e-mail címet.',
+                    })}
+                />
+                {errors.email && <p className="error-message">{errors.email.message}</p>}
+            </div>
 
-                <div>
-                    <label className="block mb-1">E-mail</label>
-                    <input
-                        type="email"
-                        className="w-full p-2 border rounded"
-                        placeholder="nev@example.com"
-                        {...register('email', {
-                            validate: (v) => {
-                                if (!v) return true;
-                                return /^[^\s@]+@[^\s@]+\.[^\s@]+$/i.test(v) || 'Adj meg érvényes e-mail címet.';
-                            }
-                        })}
-                    />
-                    {errors.email && <p className="text-red-500 text-sm">{errors.email.message}</p>}
-                </div>
+            <div className="field">
+                <label className="label">Telefon</label>
+                <input
+                    type="tel"
+                    className="input"
+                    placeholder="+36 30 123 4567"
+                    {...register('phone', {
+                        validate: (v) => {
+                            if (!v) return true;
+                            const digits = v.replace(/\D/g, '');
+                            if (digits.length < 7 || digits.length > 15) return 'Adj meg érvényes telefonszámot.';
+                            return /^[0-9+\s().-]+$/.test(v) || 'Adj meg érvényes telefonszámot.';
+                        },
+                    })}
+                />
+                {errors.phone && <p className="error-message">{errors.phone.message}</p>}
+            </div>
 
-                <div>
-                    <label className="block mb-1">Telefon</label>
-                    <input
-                        type="tel"
-                        className="w-full p-2 border rounded"
-                        placeholder="+36 30 123 4567"
-                        {...register('phone', {
-                            validate: (v) => {
-                                if (!v) return true;
-                                const digits = v.replace(/\D/g, '');
-                                if (digits.length < 7 || digits.length > 15) return 'Adj meg érvényes telefonszámot.';
-                                return /^[0-9+\s().-]+$/.test(v) || 'Adj meg érvényes telefonszámot.';
-                            }
-                        })}
-                    />
-                    {errors.phone && <p className="text-red-500 text-sm">{errors.phone.message}</p>}
-                </div>
-
-                <button
-                    type="submit"
-                    disabled={submitDisabled}
-                    className="btn-green mt-2"
-                >
+            <div className="row justify-end">
+                <button type="submit" disabled={submitDisabled} className="button button--accent">
                     Mentés
                 </button>
-            </form>
+            </div>
+        </form>
+    );
+
+    if (embedded) return FormBlock;
+
+    return (
+        <main className="layout">
+            <section className="card max-w-[720px] mx-auto">
+                <h1 className="h1 mb-3">Profil szerkesztése</h1>
+                {FormBlock}
+            </section>
         </main>
     );
 }

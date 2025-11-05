@@ -1,49 +1,20 @@
-import { collectionGroup, query, where, orderBy, limit, getDocs } from "firebase/firestore";
+//végleges
+import { collectionGroup, query, orderBy, limit, getDocs } from "firebase/firestore";
 import { jsonConvert, firestore } from "../../lib/firebase";
 import TagFilter from "../../components/tagFilter";
 import CardLoader from "../../components/cardLoader";
 
-export default async function HomePage(props) {
-    const { searchParams } = await props;
-    const sp = await searchParams;
-    const { instrument, city, type } = sp ?? {};
-
-    const parseList = val =>
-        typeof val === "string" && val.length
-            ? val.split(",").map(s => s.trim())
-            : [];
-
-    const instruments = parseList(instrument);
-    const cities = parseList(city);
-
-    const filters = [];
-    if (instruments.length) {
-        filters.push(where("instrumentTags", "array-contains-any", instruments));
-    }
-    if (cities.length) {
-        filters.push(where("cityTags", "array-contains-any", cities));
-    }
-    if (type) {
-        filters.push(where("postType", "!=", type));
-    }
-
-    const baseQuery = collectionGroup(firestore, "posts");
-    const postsQuery = query(
-        baseQuery,
-        ...filters,
-        orderBy("postType"),
-        orderBy("createdAt", "desc"),
-        limit(50)
+export default async function HomePage() {
+    const snap = await getDocs(
+        query(collectionGroup(firestore, "posts"), orderBy("createdAt", "desc"), limit(50))
     );
-
-    const snap = await getDocs(postsQuery);
-    const posts = snap.docs.map(jsonConvert);
+    const docs = snap.docs.map(jsonConvert).filter(Boolean);
 
     return (
-        <main className="p-4">
+        <main className="layout">
             <TagFilter />
-            <h1>Results</h1>
-            <CardLoader initialPosts={posts} />
+            <h2 className="h1">Posztok</h2>
+            <CardLoader initialPosts={docs} />
         </main>
     );
 }

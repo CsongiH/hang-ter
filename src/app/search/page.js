@@ -1,107 +1,71 @@
 import { firestore, jsonConvert } from "../../../lib/firebase";
-import {
-    collectionGroup,
-    query,
-    where,
-    orderBy,
-    limit,
-    getDocs,
-} from "firebase/firestore";
+import { collectionGroup, query, where, limit, getDocs } from "firebase/firestore";
 import TagFilter from "../../../components/tagFilter";
 import CardLoader from "../../../components/cardLoader";
+import { TYPE_INVERT } from "../../../components/tags/types";
 
 export const dynamic = "force-dynamic";
 
-const invertType = (t) =>
-    t === "looking-for-band"
-        ? "looking-for-musician"
-        : t === "looking-for-musician"
-            ? "looking-for-band"
-            : t === "concert-opportunity"
-                ? "concert-opportunity"
-                : "";
+const invertType = (ui) => TYPE_INVERT[ui] || "";
 
-const parseList = (val) =>
-    typeof val === "string" && val.length
-        ? val.split(",").map((s) => s.trim()).filter(Boolean)
+const parseList = (v) =>
+    typeof v === "string" && v
+        ? v.split(",").map((s) => s.trim()).filter(Boolean)
         : [];
 
-export default async function SearchPage(props) {
-    const { searchParams } = await props;
-    const { instrument, city, type } = (await searchParams) ?? {};
+export default async function SearchPage({ searchParams }) {
+    const sp = await searchParams;
+
+    const instrument = sp?.instrument || "";
+    const city = sp?.city || "";
+    const type = sp?.type || "";
 
     const instruments = parseList(instrument);
     const cities = parseList(city);
-    const mappedType = invertType(type);
+    const qType = invertType(type);
 
     const base = collectionGroup(firestore, "posts");
+    const typeWhere = qType ? [where("postType", "==", qType)] : [];
 
-    const commonClauses = [where("published", "==", true)];
-    if (mappedType) commonClauses.push(where("postType", "==", mappedType));
-
-    const orderClause = orderBy("createdAt", "desc");
-    const lim = limit(50);
+    const fetchDocs = async (wheres) => {
+        const snap = await getDocs(query(base, ...wheres, limit(200)));
+        return snap.docs.map(jsonConvert);
+    };
 
     let docs = [];
+    let byInst = [];
+    let byCity = [];
 
     if (instruments.length && cities.length) {
-        const instSnap = await getDocs(
-            query(
-                base,
-                ...commonClauses,
-                where("instrumentTags", "array-contains-any", instruments),
-                orderClause,
-                lim
-            )
-        );
-
-        const citySnap = await getDocs(
-            query(
-                base,
-                ...commonClauses,
-                where("cityTags", "array-contains-any", cities),
-                orderClause,
-                lim
-            )
-        );
-
-        const instPaths = new Set(instSnap.docs.map((d) => d.ref.path));
-        docs = citySnap.docs.filter((d) => instPaths.has(d.ref.path));
-    } else if (instruments.length) {
-        const snap = await getDocs(
-            query(
-                base,
-                ...commonClauses,
-                where("instrumentTags", "array-contains-any", instruments),
-                orderClause,
-                lim
-            )
-        );
-        docs = snap.docs;
+        [byInst, byCity] = await Promise.all([
+            fetchDocs([...typeWhere, where("instrumentTags", "array-contains-any", instruments)]),
+            fetchDocs([...typeWhere, where("cityTags", "array-contains-any", cities)]),
+        ]);
+        const instSet = new Set(byInst.map((d) => `${d.uid}/${d.slug}`));
+        docs = byCity.filter((d) => instSet.has(`${d.uid}/${d.slug}`));
     } else if (cities.length) {
-        const snap = await getDocs(
-            query(
-                base,
-                ...commonClauses,
-                where("cityTags", "array-contains-any", cities),
-                orderClause,
-                lim
-            )
-        );
-        docs = snap.docs;
+        byCity = await fetchDocs([...typeWhere, where("cityTags", "array-contains-any", cities)]);
+        docs = byCity;
+    } else if (instruments.length) {
+        byInst = await fetchDocs([...typeWhere, where("instrumentTags", "array-contains-any", instruments)]);
+        docs = byInst;
     } else {
-        const snap = await getDocs(query(base, ...commonClauses, orderClause, lim));
-        docs = snap.docs;
+        docs = await fetchDocs([...typeWhere]);
     }
 
-    const posts = docs.map(jsonConvert);
+    docs.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
     const key = `${instrument || "_"}-${city || "_"}-${type || "_"}`;
 
     return (
-        <main className="p-4">
+        <main className="layout">
             <TagFilter />
-            <h1>Results</h1>
-            <CardLoader key={key} initialPosts={posts} />
+            <h2>Keresési eredmények</h2>
+            <CardLoader
+                key={key}
+                initialPosts={docs}
+                filters={{ cities, instruments, type: qType }}
+            />
         </main>
     );
 }

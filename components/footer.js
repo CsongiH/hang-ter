@@ -1,15 +1,13 @@
+import Link from "next/link";
+
 export default function Footer() {
     return (
-        <footer className="mt-8 p-4 border-t text-center text-sm text-gray-600">
-            <div className="flex justify-center space-x-4">
-                <div>
-                    Horváth Csongor // 2025
-                </div>
-                <div>
-                    <a href="/aboutMe" className="text-blue-500 hover:underline">
-                        Rólam
-                    </a>
-                </div>
+        <footer
+            className="card-footer"
+        >
+            <div className="row justify-center items-center">
+                <span className="small muted">Horváth Csongor // 2025</span>
+                <Link href="/aboutMe">Rólam</Link>
             </div>
         </footer>
     );

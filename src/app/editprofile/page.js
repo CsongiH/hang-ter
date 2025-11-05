@@ -1,18 +1,13 @@
 'use client';
 
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '../../../lib/firebase';
+import { useUserContext } from '../../../lib/AuthContext';
+import CheckAuthentication from '../../../components/checkAuthentication';
 import EditProfileForm from '../../../components/editProfileForm';
 
 export default function Page() {
-    const [user, loading] = useAuthState(auth);
+    const { user } = useUserContext();
 
-    if (loading) return <div>Betöltés…</div>;
-    if (!user) return <div>Jelentkezz be a profilod szerkesztéséhez.</div>;
+    if (!user) return <CheckAuthentication><EditProfileForm hideUsernameSetting embedded /></CheckAuthentication>;
 
-    return (
-        <div className="p-6">
-            <EditProfileForm hideUsernameSetting />
-        </div>
-    );
+    return <EditProfileForm hideUsernameSetting />;
 }

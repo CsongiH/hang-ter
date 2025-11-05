@@ -1,83 +1,65 @@
 'use client';
 
-import Link from "next/link";
-import { UserContext } from "../lib/AuthContext";
-import { useContext } from "react";
+import Link from 'next/link';
+import Image from 'next/image';
+import { useUserContext } from '../lib/AuthContext';
 
 export default function Navbar() {
-
-    const { user, username, isAdmin } = useContext(UserContext);
-
-    /*
-        const user = null;
-    const username = null;
-     */
+    const { user, username, isAdmin } = useUserContext();
 
     return (
-
-        <nav className="navbar sticky">
-            <ul>
-                <li>
+        <nav
+            className="card"
+            style={{
+                position: 'sticky',
+                top: 0,
+                zIndex: 50,
+                padding: 12,
+                borderTopLeftRadius: 0,
+                borderTopRightRadius: 0,
+                borderBottomLeftRadius: 'var(--r-lg)',
+                borderBottomRightRadius: 'var(--r-lg)',
+                marginLeft: '0',
+                marginRight: '0',
+            }}
+        >
+            <div className="row justify-between items-center">
+                <div className="row items-center">
                     <Link href="/">
-                        <button>HangTér</button>
+                        <span className="logo">HangTér</span>
                     </Link>
-                </li>
-                <li>
-                    <Link href="/">
-                        <button>Zenekarok</button>
-                    </Link>
-                </li>
-                <li>
-                    <Link href="/">
-                        <button>Zenészek</button>
-                    </Link>
-                </li>
-                <li>
-                    <Link href="/posteditor">
-                        <button>Poszt</button>
-                    </Link>
-                </li>
+                </div>
 
-
-                {/* ******************************************************************
-                bejelentezés check
-                ha létzik username -> Admin(isAdmin) alapján <- nincs még kész
-                nem létezik username -> logmein (kezeli, ha user van de username nincs)
-                ******************************************************************* */}
-
-                {
-                    username && (
+                <div className="row items-center">
+                    {username ? (
                         <>
-                            <li>
-                                {/*FIREBASE isAdmin ALAPJÁN ADMIN CHECK <- nincs még kész*/}
-                                {isAdmin && (
-                                    <Link href="/admin">
-                                        <button>Admin</button>
-                                    </Link>
-                                )}
-                            </li>
-
-                            <li>
-                                <Link href={`/${username}`}>
-                                    <img src={user?.photoURL || "/user-icon-placeholder.png"} alt={"User profile picture"} />
-                                    {/* alt tagek magyarul vagy angolul?? */}
-                                </Link>
-                            </li>
-                        </>
-                    )
-                }
-                {
-                    !username && (
-                        <li>
-                            <Link href="/logmein">
-                                <button>Bejelentkezés</button>
+                            <Link href="/posteditor" className="button">
+                                Poszt létrehozása
                             </Link>
-                        </li>
-                    )
-                }
 
-            </ul>
+                            {isAdmin && (
+                                <Link href="/admin" className="button button--accent">
+                                    Admin
+                                </Link>
+                            )}
+
+                            <Link href={`/${encodeURIComponent(username)}`}>
+                                <Image
+                                    src={user?.photoURL || '/user-icon-placeholder.png'}
+                                    alt={`${username} profilja`}
+                                    width={42}
+                                    height={42}
+                                    className="block w-[42px] h-[42px] rounded-full object-cover bg-[var(--bg-2)] border border-[var(--bg-2)] box-border"
+                                />
+                            </Link>
+                        </>
+                    ) : (
+                        <Link href="/logmein" className="button button--accent">
+                            Bejelentkezés
+                        </Link>
+                    )}
+                </div>
+            </div>
         </nav>
-    )
-
+    );
 }
