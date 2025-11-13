@@ -18,7 +18,7 @@ import {
 } from "firebase/firestore";
 
 const postsPerPge = 5;
-const usersBatchSize = 10;
+
 
 export default function CardLoader({
     initialPosts = [],
@@ -57,13 +57,15 @@ export default function CardLoader({
     const sortByCreatedDesc = (a, b) => toMillis(b?.createdAt) - toMillis(a?.createdAt);
 
     const fetchUsersMeta = async (userIds) => {
+        const usersBatchSize = 10; // Firastore "where" queryn max 10es limit van
+        if (!Array.isArray(userIds) || !userIds.length) return;
+
         const uncachedIds = userIds.filter(
             uid => !banCache.current.has(uid) || !photoCache.current.has(uid)
         );
 
         for (let i = 0; i < uncachedIds.length; i += usersBatchSize) {
             const batch = uncachedIds.slice(i, i + usersBatchSize);
-            if (!batch.length) continue;
 
             try {
                 const snapshot = await getDocs(
@@ -77,15 +79,12 @@ export default function CardLoader({
                 });
 
                 batch.forEach((id) => {
-                    if (!banCache.current.has(id)) banCache.current.set(id, true);
+                    if (!banCache.current.has(id)) banCache.current.set(id, false);
                     if (!photoCache.current.has(id)) photoCache.current.set(id, null);
                 });
             } catch (error) {
                 toast.error('Hiba történt a felhasználói adatok betöltésekor');
-                batch.forEach((id) => {
-                    banCache.current.set(id, true);
-                    photoCache.current.set(id, null);
-                });
+                console.error('User fetch error:', error);
             }
         }
     };
