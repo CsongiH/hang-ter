@@ -22,19 +22,20 @@ function PostManager() {
     const { slug } = useParams();
     const { user } = useUserContext();
 
-    if (!slug) {
-        router.replace('/404');
-        return null;
-    }
-
     const postRef = user ? doc(firestore, 'users', user.uid, 'posts', slug) : undefined;
     const [post, loading] = useDocumentData(postRef);
 
     useEffect(() => {
-        if (!loading && post === undefined) router.replace('/404');
+        if (!slug) {
+            router.replace('/404');
+            return;
+        }
+        if (!loading && post === undefined) {
+            router.replace('/404');
+        }
     }, [loading, post, router, slug]);
 
-    if (loading) {
+    if (!slug || loading) {
         return (
             <main className="layout">
                 <section className="card max-w-[720px] mx-auto text-center">
