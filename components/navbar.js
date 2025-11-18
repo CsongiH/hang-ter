@@ -33,7 +33,7 @@ export default function Navbar() {
                 <div className="row items-center">
                     {username ? (
                         <>
-                            <Link href="/posteditor" className="button">
+                            <Link href="/posteditor" className="button button--accent">
                                 Poszt létrehozása
                             </Link>
 

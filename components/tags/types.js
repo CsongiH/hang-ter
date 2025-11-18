@@ -5,7 +5,7 @@ export const typeTags = [
 ];
 
 
-export const TYPE_INVERT = {
+export const typeInvert = {
     "looking-for-band": "looking-for-musician",
     "looking-for-musician": "looking-for-band",
     "concert-opportunity": "concert-opportunity",

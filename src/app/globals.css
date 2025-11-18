@@ -2,6 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
 @import "tailwindcss";
 
+/*
 :root {
   --bg-0: #1e1e1e;
   --bg-1: #252525;
@@ -9,6 +10,25 @@
   --text: #ffffff;
   --muted: #a9a9a9;
   --accent: #df4320;
+  --link: var(--accent);
+  --r-xs: 8px;
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 24px;
+  --space: 16px;
+  --fs-base: 16px;
+  --fs-h1: 20px;
+  --fs-h2: 18px;
+  --lh: 1.55;
+}
+*/
+:root {
+  --bg-0: #e8e8e8;
+  --bg-1: #cdcdcd;
+  --bg-2: #f9f5f3;
+  --text: #000000;
+  --muted: #615954;
+  --accent: #ff5d1d;
   --link: var(--accent);
   --r-xs: 8px;
   --r-sm: 12px;
@@ -125,7 +145,7 @@ a {
   min-height: 44px;
   border: 1px solid transparent;
   border-radius: 999px;
-  background: var(--bg-2);
+  background: var(--bg-1);
   color: var(--text);
   font-weight: 600;
   line-height: 1;
@@ -138,7 +158,7 @@ a {
 
 .button--accent {
   background: var(--accent);
-  color: var(--text);
+  color: var(--bg-2);
 }
 
 .button--ghost {
@@ -175,7 +195,7 @@ a {
 
 .label {
   font-size: 0.95rem;
-  color: var(--muted);
+  color: var(--text);
 }
 
 .input {
@@ -254,6 +274,7 @@ select.select[size] {
 .input::placeholder,
 .textarea::placeholder {
   color: var(--muted);
+  font-style: italic;
 }
 
 .input:focus,
@@ -315,7 +336,6 @@ input[type="number"] {
   width: 100%;
   border-collapse: collapse;
   background: var(--bg-1);
-  border: 1px solid var(--bg-2);
   border-radius: var(--r-md);
   overflow: hidden;
 }
@@ -539,7 +559,7 @@ input[type="number"] {
   padding: 10px 14px;
   min-height: 44px;
   background: var(--accent);
-  color: var(--text);
+  color: var(--bg-2);
   font-weight: 600;
   line-height: 1;
   border: 1px solid transparent;
@@ -664,7 +684,7 @@ button {
 }
 
 .ok-message {
-  color: rgb(63, 219, 81);
+  color: rgb(19, 159, 35);
   font-style: italic;
   font-weight: bold;
 }

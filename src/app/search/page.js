@@ -2,11 +2,11 @@ import { firestore, jsonConvert } from "../../../lib/firebase";
 import { collectionGroup, query, where, limit, getDocs } from "firebase/firestore";
 import TagFilter from "../../../components/tagFilter";
 import CardLoader from "../../../components/cardLoader";
-import { TYPE_INVERT } from "../../../components/tags/types";
+import { typeInvert } from "../../../components/tags/types";
 
 export const dynamic = "force-dynamic";
 
-const invertType = (ui) => TYPE_INVERT[ui] || "";
+const invertType = (ui) => typeInvert[ui] || "";
 
 const parseList = (v) =>
     typeof v === "string" && v

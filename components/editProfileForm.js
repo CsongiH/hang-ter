@@ -86,7 +86,7 @@ export default function EditProfileForm({ embedded = false, hideUsernameSetting 
                 const snap = await getDoc(ref);
                 setUnameAvailable(!snap.exists());
                 setUnameLoading(false);
-            }, 500),
+            }, 1000),
         [needsUsername]
     );
 
@@ -168,7 +168,7 @@ export default function EditProfileForm({ embedded = false, hideUsernameSetting 
             } else {
                 await setDoc(ref, { bio, updatedAt: serverTimestamp() }, { merge: true });
             }
-
+            throw new Error('Mentési hiba');
             toast.success('Profil frissítve');
             onSaved?.();
             const fresh = await getDoc(ref);
@@ -192,7 +192,7 @@ export default function EditProfileForm({ embedded = false, hideUsernameSetting 
                     <input
                         type="text"
                         className="input"
-                        placeholder="pl. nagy_fero"
+                        placeholder="pl. pelda_istvan1"
                         {...register('username', {
                             setValueAs: (v) => (v ?? '').toLowerCase(),
                             validate: (v) => isValidUsername(v),
