@@ -2,8 +2,87 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write;
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    function hasUsername() {
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.username != null;
+    }
+
+    function isValidUsername(username) {
+      return username.matches('^[a-z0-9_]{3,15}$');
+    }
+
+    match /usernames/{username} {
+      allow read: if true;
+
+      allow create: if isSignedIn()
+        && isValidUsername(username)
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasAll(['uid', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['uid', 'createdAt']);
+
+      allow update, delete: if false;
+    }
+
+    match /users/{uid} {
+      allow read: if true;
+
+      allow create: if isOwner(uid)
+        && request.resource.data.keys().hasAll(['username', 'createdAt', 'updatedAt'])
+        && isValidUsername(request.resource.data.username)
+        && (!request.resource.data.keys().hasAny(['isAdmin']) || request.resource.data.isAdmin == false);
+
+      allow update: if isOwner(uid)
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['username', 'isAdmin', 'uid']))
+        && (!request.resource.data.keys().hasAny(['isBanned'])
+            || request.resource.data.isBanned == resource.data.isBanned);
+
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isBanned'])
+        && request.resource.data.isBanned is bool;
+
+      match /posts/{slug} {
+        allow read: if true;
+
+        allow create: if isOwner(uid)
+          && hasUsername()
+          && request.resource.data.keys().hasAll(['title', 'content', 'slug', 'uid', 'username', 'postType', 'createdAt', 'updatedAt'])
+          && request.resource.data.slug == slug
+          && request.resource.data.uid == uid
+          && request.resource.data.title is string
+          && request.resource.data.title.size() >= 4
+          && request.resource.data.title.size() <= 100
+          && request.resource.data.content is string
+          && request.resource.data.content.size() >= 10
+          && request.resource.data.content.size() <= 20000
+          && (!request.resource.data.keys().hasAny(['isRemoved']) || request.resource.data.isRemoved == false);
+
+        allow update: if isOwner(uid)
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['slug', 'uid', 'username', 'isRemoved'])
+          && request.resource.data.title is string
+          && request.resource.data.title.size() >= 4
+          && request.resource.data.title.size() <= 100
+          && request.resource.data.content is string
+          && request.resource.data.content.size() >= 10
+          && request.resource.data.content.size() <= 20000;
+
+        allow update: if isAdmin()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRemoved'])
+          && request.resource.data.isRemoved is bool;
+
+        allow delete: if isOwner(uid);
+      }
     }
   }
 }
