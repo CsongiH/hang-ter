@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import debounce from 'lodash.debounce';
 import { toast } from 'react-hot-toast';
-import { useUserContext } from '../lib/AuthContext';
-import { firestore } from '../lib/firebase';
+import { useUserContext } from '../../lib/AuthContext';
+import { firestore } from '../../lib/firebase';
 import { doc, getDoc, setDoc, runTransaction, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 

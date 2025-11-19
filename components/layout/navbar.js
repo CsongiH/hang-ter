@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useUserContext } from '../lib/AuthContext';
+import { useUserContext } from '../../lib/AuthContext';
 
 export default function Navbar() {
     const { user, username, isAdmin } = useUserContext();

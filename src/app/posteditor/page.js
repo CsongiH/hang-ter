@@ -1,7 +1,7 @@
 'use client';
 
-import CheckAuthentication from '../../../components/checkAuthentication';
-import PostForm from '../../../components/postForm';
+import CheckAuthentication from '../../../components/auth/checkAuthentication';
+import PostForm from '../../../components/forms/postForm';
 
 export default function EditorPostsPage() {
     return (

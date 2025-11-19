@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useMemo } from "react";
 import Feed from "./cardLayout";
-import { firestore, jsonConvert } from "../lib/firebase";
+import { firestore, jsonConvert } from "../../lib/firebase";
 import {
     collectionGroup,
     collection,

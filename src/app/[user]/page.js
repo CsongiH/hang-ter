@@ -2,9 +2,9 @@ import { notFound } from 'next/navigation';
 import { getUserWithUsername, jsonConvert } from "../../../lib/firebase";
 import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 import { firestore } from "../../../lib/firebase";
-import Profile from "../../../components/profile";
-import CardLoader from '../../../components/cardLoader';
-import UserOwnerActions from '../../../components/userOwnerActions';
+import Profile from "../../../components/profile/profile";
+import CardLoader from '../../../components/ui/cardLoader';
+import UserOwnerActions from '../../../components/profile/userOwnerActions';
 
 export const revalidate = 60; //percenként ISR
 

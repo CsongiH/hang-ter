@@ -1,8 +1,8 @@
 //végleges
 import { collectionGroup, query, orderBy, limit, getDocs } from "firebase/firestore";
 import { jsonConvert, firestore } from "../../lib/firebase";
-import TagFilter from "../../components/tagFilter";
-import CardLoader from "../../components/cardLoader";
+import TagFilter from "../../components/ui/tagFilter";
+import CardLoader from "../../components/ui/cardLoader";
 
 export default async function HomePage() {
     const snap = await getDocs(

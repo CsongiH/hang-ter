@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useUserContext } from "../lib/AuthContext";
+import { useUserContext } from "../../lib/AuthContext";
 
 export default function CheckAuthentication({ children }) {
     const { user, username } = useUserContext();

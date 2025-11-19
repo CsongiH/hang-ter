@@ -1,8 +1,8 @@
 import "./globals.css";
-import Navbar from "../../components/navbar";
+import Navbar from "../../components/layout/navbar";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "../../lib/AuthContext";
-import Footer from "../../components/footer";
+import Footer from "../../components/layout/footer";
 
 export default function RootLayout({ children }) {
     return (

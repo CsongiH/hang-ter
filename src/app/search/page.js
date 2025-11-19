@@ -1,8 +1,8 @@
 import { firestore, jsonConvert } from "../../../lib/firebase";
 import { collectionGroup, query, where, limit, getDocs } from "firebase/firestore";
-import TagFilter from "../../../components/tagFilter";
-import CardLoader from "../../../components/cardLoader";
-import { typeInvert } from "../../../components/tags/types";
+import TagFilter from "../../../components/ui/tagFilter";
+import CardLoader from "../../../components/ui/cardLoader";
+import { typeInvert } from "../../../lib/data/types";
 
 export const dynamic = "force-dynamic";
 

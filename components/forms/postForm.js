@@ -9,11 +9,11 @@ import AsyncSelect from 'react-select/async';
 import toast from 'react-hot-toast';
 import { doc, setDoc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 
-import { firestore } from '../lib/firebase';
-import { useUserContext } from '../lib/AuthContext';
-import { instrumentOptions } from './tags/instruments';
-import { settlements as cityOptions } from './tags/settlements';
-import { typeTags } from './tags/types';
+import { firestore } from '../../lib/firebase';
+import { useUserContext } from '../../lib/AuthContext';
+import { instrumentOptions } from '../../lib/data/instruments';
+import { settlements as cityOptions } from '../../lib/data/settlements';
+import { typeTags } from '../../lib/data/types';
 
 const randomIdLength = 6;
 const randomIdCharacters = 'abcdefghijklmnopqrstuvwxyz0123456789';

@@ -1,4 +1,4 @@
-import LogInButtons from '../../../components/logInButtons';
+import LogInButtons from '../../../components/auth/logInButtons';
 
 export default function Page() {
     return (

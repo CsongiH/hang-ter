@@ -1,8 +1,8 @@
 'use client';
 
 import { useUserContext } from '../../../lib/AuthContext';
-import CheckAuthentication from '../../../components/checkAuthentication';
-import EditProfileForm from '../../../components/editProfileForm';
+import CheckAuthentication from '../../../components/auth/checkAuthentication';
+import EditProfileForm from '../../../components/forms/editProfileForm';
 
 export default function Page() {
     const { user } = useUserContext();

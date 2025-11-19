@@ -1,9 +1,9 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useMemo } from 'react';
-import { useUserContext } from '../lib/AuthContext';
-import { instrumentOptions } from './tags/instruments';
-import { settlements as cityOptions } from './tags/settlements';
+import { useUserContext } from '../../lib/AuthContext';
+import { instrumentOptions } from '../../lib/data/instruments';
+import { settlements as cityOptions } from '../../lib/data/settlements';
 
 export default function Feed({ posts, showEdit = false }) {
     if (!posts?.length) return null;

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { doc, getDoc } from "firebase/firestore";
 import { firestore, jsonConvert, getUserWithUsername } from "../../../../../lib/firebase";
-import AdminDataTable from "../../../../../components/adminDataTable";
+import AdminDataTable from "../../../../../components/admin/adminDataTable";
 
 export default async function AdminPostDetail(props) {
     const { params } = props;

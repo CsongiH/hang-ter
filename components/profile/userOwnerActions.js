@@ -1,8 +1,8 @@
 'use client';
 
 import Link from "next/link";
-import { useUserContext } from "../lib/AuthContext";
-import { LogOutButton } from "./logInButtons";
+import { useUserContext } from "../../lib/AuthContext";
+import { LogOutButton } from "../auth/logInButtons";
 
 export default function UserOwnerActions({ profileUsername }) {
     const { username } = useUserContext();

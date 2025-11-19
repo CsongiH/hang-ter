@@ -2,9 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getUserWithUsername, jsonConvert, firestore } from "../../../../lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
-import { instrumentOptions } from "../../../../components/tags/instruments";
-import { settlements as cityOptions } from "../../../../components/tags/settlements";
-import { typeTags } from "../../../../components/tags/types";
+import { instrumentOptions } from "../../../../lib/data/instruments";
+import { settlements as cityOptions } from "../../../../lib/data/settlements";
+import { typeTags } from "../../../../lib/data/types";
 
 export const revalidate = 60; //percenként ISR
 

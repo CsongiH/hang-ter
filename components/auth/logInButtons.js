@@ -7,10 +7,10 @@ import { useRouter } from 'next/navigation';
 import { useSignInWithGoogle } from 'react-firebase-hooks/auth';
 import { signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import { auth, firestore } from '../lib/firebase';
-import { useUserContext } from '../lib/AuthContext';
+import { auth, firestore } from '../../lib/firebase';
+import { useUserContext } from '../../lib/AuthContext';
 
-const EditProfileForm = dynamic(() => import('./editProfileForm'), { ssr: false });
+const EditProfileForm = dynamic(() => import('../forms/editProfileForm'), { ssr: false });
 
 export default function LogInButtons() {
     const router = useRouter();

@@ -4,9 +4,9 @@ import { useEffect, useMemo, useState, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Select from 'react-select';
 import AsyncSelect from 'react-select/async';
-import { instrumentOptions } from './tags/instruments';
-import { settlements as cityOptions } from './tags/settlements';
-import { typeTags } from './tags/types';
+import { instrumentOptions } from '../../lib/data/instruments';
+import { settlements as cityOptions } from '../../lib/data/settlements';
+import { typeTags } from '../../lib/data/types';
 
 const normalizeText = (text) =>
   String(text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');

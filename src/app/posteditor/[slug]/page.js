@@ -5,8 +5,8 @@ import { useRouter, useParams } from 'next/navigation';
 import { useDocumentData } from 'react-firebase-hooks/firestore';
 import { doc } from 'firebase/firestore';
 import { useUserContext } from '../../../../lib/AuthContext';
-import CheckAuthentication from '../../../../components/checkAuthentication';
-import PostForm from '../../../../components/postForm';
+import CheckAuthentication from '../../../../components/auth/checkAuthentication';
+import PostForm from '../../../../components/forms/postForm';
 import { firestore } from '../../../../lib/firebase';
 
 export default function PostEditPage() {
