@@ -199,19 +199,19 @@ export default function EditProfileForm({ embedded = false, hideUsernameSetting 
                         })}
                     />
                     <div className="small">
-                        {!username && !unameLoading &&
+                        {!username &&
                             <span className="muted italic">3-15 karakter, a-z, 0-9 vagy _</span>
-                        }
-                        {username && !usernameFormatOk && !unameLoading &&
-                            <span className="error-message">3-15 karakter, a-z, 0-9 vagy _</span>
                         }
                         {username && unameLoading &&
                             <span className="muted italic" >Ellenőrzés…</span>
                         }
-                        {username && !unameLoading && unameAvailable &&
+                        {username && !unameLoading && !usernameFormatOk &&
+                            <span className="error-message">3-15 karakter, a-z, 0-9 vagy _</span>
+                        }
+                        {username && !unameLoading && usernameFormatOk && unameAvailable &&
                             <span className="ok-message">{username} elérhető!</span>
                         }
-                        {username && !unameLoading && !unameAvailable && usernameFormatOk &&
+                        {username && !unameLoading && usernameFormatOk && !unameAvailable &&
                             <span className="error-message">{username} már használt</span>
                         }
                     </div>

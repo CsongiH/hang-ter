@@ -1,8 +1,9 @@
 "use client";
+const epochMin = 1745142960000; // 2025,04,25
+const epochMax = 9999999999999;
 
 const formatTimestamp = (value) => {
-    if (typeof value !== "number") return value;
-    if (value < 1000000000000 || value > 9999999999999) return value;
+    if (value < epochMin || value > epochMax) return value;
     return new Date(value).toLocaleString("hu-HU");
 };
 
@@ -14,10 +15,7 @@ const isSimpleValue = (value) =>
 
 const formatSimpleValue = (value) => {
     if (typeof value === "boolean") return value ? "true" : "false";
-    if (typeof value === "number") {
-        const formatted = formatTimestamp(value);
-        if (formatted) return formatted;
-    }
+    if (typeof value === "number") { return formatTimestamp(value); }
 
     return String(value);
 };
@@ -51,11 +49,7 @@ const flattenObject = (obj, prefix = "") => {
             } else {
                 value.forEach((item, index) => {
                     const itemPath = `${path}[${index}]`;
-                    if (item && typeof item === "object") {
-                        Object.assign(result, flattenObject(item, itemPath));
-                    } else {
-                        result[itemPath] = item;
-                    }
+                    result[itemPath] = item;
                 });
             }
             continue;

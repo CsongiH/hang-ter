@@ -19,7 +19,7 @@ const raw = fs.readFileSync(csvPath, 'utf8');
 const lines = raw.trim().split('\n').slice(1);
 
 const options = lines.map(line => {
-    const [helyseg/*, county*/] = line.split(';').map(s => s.trim());
+    const [helyseg] = line.split(';').map(s => s.trim());
     const slug = helyseg
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')

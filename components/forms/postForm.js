@@ -191,6 +191,20 @@ export default function PostForm({ mode, postRef, defaultValues }) {
         }
     };
 
+    const handleDelete = async () => {
+        if (!window.confirm('Biztosan törölni szeretnéd?')) return;
+
+        try {
+            if (mode === 'edit') {
+                await updateDoc(postRef, { isRemoved: true });
+            }
+            toast.success('Poszt törölve');
+            router.push(`/${encodeURIComponent(username)}`);
+        } catch (error) {
+            toast.error('Hiba történt. Próbáld újra.');
+        }
+    };
+
     return (
         <article className="card post-card">
             <form onSubmit={handleSubmit(onSubmit)} className="stack">
@@ -282,6 +296,9 @@ export default function PostForm({ mode, postRef, defaultValues }) {
                 )}
 
                 <div className="row justify-end">
+                    <button type="button" onClick={handleDelete} className="button button--danger">
+                        <img src="/trash.svg" alt="" className="icon icon--white" />
+                    </button>
                     <button type="submit" disabled={!isValid || !isDirty} className="button button--accent">
                         Mentés
                     </button>
