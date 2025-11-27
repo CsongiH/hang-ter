@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useUserContext } from '../../lib/AuthContext';
+import ThemeToggle from '../ui/themeToggle';
 
 export default function Navbar() {
     const { user, username, isAdmin } = useUserContext();
@@ -31,6 +32,8 @@ export default function Navbar() {
                 </div>
 
                 <div className="row items-center">
+                    <ThemeToggle />
+
                     {username ? (
                         <>
                             <Link href="/posteditor" className="button button--accent">

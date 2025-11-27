@@ -70,7 +70,7 @@ export default function Profile({ user }) {
                                     rel={c.external ? "noopener noreferrer" : undefined}
                                     className="button button--ghost button--sm"
                                 >
-                                    <img src={c.icon} alt="" className="icon icon--white" />
+                                    <img src={c.icon} alt="" className="icon icon--adaptive" />
                                     {c.label}
                                 </a>
                             ))}

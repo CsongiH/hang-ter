@@ -1,4 +1,4 @@
-const base = process.env.WARM_BASE || 'http://localhost:3000';
+const base = 'http://localhost:3000';
 const paths = [
     '/',
     '/search',

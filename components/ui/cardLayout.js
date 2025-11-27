@@ -28,7 +28,8 @@ function CardContent({ post, showEdit = false }) {
     const tags = [...instLabels, ...cityLabels].slice(0, 12);
 
     const content = post.content || '';
-    const preview = content.length > 45 ? content.slice(0, 45) + '...' : content;
+    const cleanContent = content.replace(/\s+/g, ' ').trim(); //enter ne tolja szet a layoutot
+    const preview = cleanContent.length > 45 ? cleanContent.slice(0, 45) + '...' : cleanContent;
 
     return (
         <article className="card" style={{ position: 'relative' }}>
@@ -54,13 +55,13 @@ function CardContent({ post, showEdit = false }) {
                         </div>
                     )}
 
-                    <div style={{ whiteSpace: 'pre-wrap', color: 'var(--muted)' }}>{preview}</div>
+                    <div style={{ color: 'var(--muted)' }}>{preview}</div>
 
                     {isOwner && (
                         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                             <Link href={`/posteditor/${post.slug}`}>
-                                <span className="corner-button corner-button--tr" style={{ background: 'var(--bg-2)' }}>
-                                    Szerkesztés
+                                <span className="corner-button corner-button--tr">
+                                    <img src="/pen.svg" alt="" className="icon icon--adaptive" />
                                 </span>
                             </Link>
                         </div>
