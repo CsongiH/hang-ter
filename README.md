@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# HangTér
 
-## Getting Started
+Zenészek és zenekarok közötti kapcsolatteremtő platform.
 
-First, run the development server:
+## Technológiák
+
+- Next.js 15.2.4
+- React 19
+- Firebase 
+
+## Előfeltételek
+
+Az alkalmazás futtatásához szükséges:
+
+- Node.js 18.x vagy újabb verzió
+- npm, yarn, pnpm vagy bun csomagkezelő
+
+## Telepítés
+
+1. Klónozd le a repository-t:
+
+```bash
+git clone <repository-url>
+cd hang-ter
+```
+
+2. Telepítsd a függőségeket:
+
+```bash
+npm install
+```
+
+## Fejlesztői szerver indítása
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Nyisd meg a [http://localhost:3000] címet a böngészőben.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## Build és éles verzió
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Production build készítése:
 
-## Learn More
+```bash
+npm run build
+```
 
-To learn more about Next.js, take a look at the following resources:
+Az elkészült build futtatása:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm start
+```
