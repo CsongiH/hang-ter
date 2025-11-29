@@ -4,6 +4,8 @@ import { jsonConvert, firestore } from "../../lib/firebase";
 import TagFilter from "../../components/ui/tagFilter";
 import CardLoader from "../../components/ui/cardLoader";
 
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
     const snap = await getDocs(
         query(collectionGroup(firestore, "posts"), orderBy("createdAt", "desc"), limit(50))
