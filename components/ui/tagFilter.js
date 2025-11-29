@@ -32,6 +32,7 @@ export default function TagFilter() {
       styles: {
         menuPortal: (base) => ({ ...base, zIndex: 9999 }),
         menu: (base) => ({ ...base, zIndex: 9999 }),
+        input: (base) => ({ ...base, color: 'var(--text)' }),
       },
     }),
     []
