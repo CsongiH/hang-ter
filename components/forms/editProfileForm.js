@@ -168,7 +168,6 @@ export default function EditProfileForm({ embedded = false, hideUsernameSetting 
             } else {
                 await setDoc(ref, { bio, updatedAt: serverTimestamp() }, { merge: true });
             }
-            throw new Error('Mentési hiba');
             toast.success('Profil frissítve');
             onSaved?.();
             const fresh = await getDoc(ref);

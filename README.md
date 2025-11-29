@@ -31,7 +31,6 @@ npm install
 ```
 
 ## Fejlesztői szerver indítása
-
 ```bash
 npm run dev
 ```
