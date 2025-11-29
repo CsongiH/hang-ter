@@ -7,7 +7,7 @@ import Footer from "../../components/layout/footer";
 
 export default function RootLayout({ children }) {
     return (
-        <html lang="hu" suppressHydrationWarning>
+        <html lang="hu" data-theme="dark" suppressHydrationWarning>
             <head>
                 <script
                     dangerouslySetInnerHTML={{
