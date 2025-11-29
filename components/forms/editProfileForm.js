@@ -261,7 +261,7 @@ export default function EditProfileForm({ embedded = false, hideUsernameSetting 
             <div className="field">
                 <label className="label">Instagram</label>
                 <input
-                    type="url"
+                    type="text"
                     className="input"
                     placeholder="https://www.instagram.com/felhasznalo vagy @felhasznalo"
                     {...register('instagram', {
@@ -284,7 +284,7 @@ export default function EditProfileForm({ embedded = false, hideUsernameSetting 
             <div className="field">
                 <label className="label">Facebook</label>
                 <input
-                    type="url"
+                    type="text"
                     className="input"
                     placeholder="https://www.facebook.com/felhasznalo vagy @felhasznalo"
                     {...register('facebook', {
